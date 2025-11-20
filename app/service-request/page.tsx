@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import DatePicker from "react-datepicker";
@@ -92,6 +92,15 @@ export default function ServiceRequestPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [servicesExpanded, setServicesExpanded] = useState(false);
+  const [hasAttemptedSubmit, setHasAttemptedSubmit] = useState(false);
+  
+  // Reset validation attempt flag when navigating away from step 3
+  useEffect(() => {
+    if (currentStep !== 3) {
+      setHasAttemptedSubmit(false);
+    }
+  }, [currentStep]);
+  
   const [submittedData, setSubmittedData] = useState<{
     vehicles: Array<{
       name: string;
@@ -283,13 +292,17 @@ export default function ServiceRequestPage() {
 
   const validateStep3 = (): boolean => {
     if (datePreference === "date" && !preferredDate) {
-      showToast("Please select a preferred date or choose flexible on date", "error");
+      if (hasAttemptedSubmit) {
+        showToast("Please select a preferred date or choose flexible on date", "error");
+      }
       return false;
     }
 
     if (timePreference === "window") {
       if (!startTime || !endTime) {
-        showToast("Please enter both start and end times or choose flexible on time", "error");
+        if (hasAttemptedSubmit) {
+          showToast("Please enter both start and end times or choose flexible on time", "error");
+        }
         return false;
       }
       // Validate that end time is after start time
@@ -298,7 +311,9 @@ export default function ServiceRequestPage() {
       const startMinutes = startHour * 60 + startMin;
       const endMinutes = endHour * 60 + endMin;
       if (endMinutes <= startMinutes) {
-        showToast("End time must be after start time", "error");
+        if (hasAttemptedSubmit) {
+          showToast("End time must be after start time", "error");
+        }
         return false;
       }
     }
@@ -325,6 +340,9 @@ export default function ServiceRequestPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Mark that user has attempted to submit
+    setHasAttemptedSubmit(true);
 
     // Final validation
     if (!validateStep1() || !validateStep2() || !validateStep3()) {
@@ -418,6 +436,7 @@ export default function ServiceRequestPage() {
       setStartTime("");
       setEndTime("");
       setNotes("");
+      setHasAttemptedSubmit(false);
     } catch (error) {
       showToast("Failed to submit request. Please try again.", "error");
     } finally {
