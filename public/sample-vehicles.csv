@@ -1,0 +1,10 @@
+name,year,make,model,vin,license_plate,license_plate_state
+Delivery Van 1,2022,Ford,Transit,1FTBR1CM5NKA12345,ABC-1234,CA
+Express Cargo,2021,Chevrolet,Express,1GCVKREC1MZ123456,DEF-5678,TX
+ProMaster Fleet,2023,Ram,ProMaster,3C6TRVAG3NE123456,GHI-9012,FL
+,2020,Ford,F-150,1FTFW1ET5LFC12345,JKL-3456,NY
+Toyota Van,2022,Toyota,Sienna,5TDKZ3DC1NS123456,MNO-7890,CA
+Nissan NV,2021,Nissan,NV200,1N4AL3AP8JC123456,PQR-2345,AZ
+E-Series Truck,2023,Ford,E-Series,1FTBR2CM5NKA12345,STU-6789,IL
+Sprinter Van,2020,Mercedes,Sprinter,WD3PE8EB0LJ123456,VWX-0123,WA
+
