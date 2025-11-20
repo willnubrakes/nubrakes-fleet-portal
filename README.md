@@ -97,8 +97,83 @@ nubrakes-fleet-portal/
 - **Auth0**: Authentication will be added later
 - **Zapier**: Webhook endpoint (`/api/webhook`) is ready for Zapier integration
 
+## Deployment to GitHub Pages
+
+This project is configured for static export to GitHub Pages.
+
+### Option 1: Using GitHub Actions (Recommended)
+
+1. **Update your Personal Access Token** to include `workflow` scope:
+   - Go to: https://github.com/settings/tokens
+   - Edit your token and check the `workflow` scope
+   - Or create a new token with `repo` and `workflow` scopes
+
+2. **Enable GitHub Pages**:
+   - Go to your repository: https://github.com/willnubrakes/nubrakes-fleet-portal/settings/pages
+   - Under "Source", select "GitHub Actions"
+   - The workflow will automatically deploy on every push to `main`
+
+3. **Create the workflow file** (`.github/workflows/deploy.yml`):
+   ```yaml
+   name: Deploy to GitHub Pages
+   
+   on:
+     push:
+       branches: [main]
+   
+   permissions:
+     contents: read
+     pages: write
+     id-token: write
+   
+   jobs:
+     build:
+       runs-on: ubuntu-latest
+       steps:
+         - uses: actions/checkout@v4
+         - uses: actions/setup-node@v4
+           with:
+             node-version: "22"
+             cache: "npm"
+         - run: npm ci
+         - run: npm run build
+         - uses: actions/configure-pages@v4
+         - uses: actions/upload-pages-artifact@v3
+           with:
+             path: "./out"
+     
+     deploy:
+       environment:
+         name: github-pages
+         url: ${{ steps.deployment.outputs.page_url }}
+       runs-on: ubuntu-latest
+       needs: build
+       steps:
+         - uses: actions/deploy-pages@v4
+   ```
+
+### Option 2: Manual Deployment
+
+1. **Build the site**:
+   ```bash
+   npm run build
+   ```
+
+2. **Enable GitHub Pages**:
+   - Go to: https://github.com/willnubrakes/nubrakes-fleet-portal/settings/pages
+   - Under "Source", select "Deploy from a branch"
+   - Choose branch: `gh-pages` and folder: `/ (root)`
+
+3. **Deploy manually**:
+   ```bash
+   npm run deploy
+   ```
+
+Your site will be available at: `https://willnubrakes.github.io/nubrakes-fleet-portal/`
+
 ## Notes
 
 - Vehicle data is stored in React Context (in-memory, not persisted)
 - CSV upload expects columns: `year`, `make`, `model`, `vin`, `license_plate`
-- Service request payload is logged to console (ready for Zapier webhook)
+- Service request payload is logged to console in static deployment (API routes don't work on GitHub Pages)
+- For production webhook, update the fetch URL in `app/service-request/page.tsx` to point to your Zapier webhook
