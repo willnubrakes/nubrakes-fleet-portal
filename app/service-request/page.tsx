@@ -116,6 +116,7 @@ export default function ServiceRequestPage() {
           name: vehicle?.name,
           vin: vehicle?.vin,
           licensePlate: vehicle?.licensePlate,
+          licensePlateState: vehicle?.licensePlateState,
         };
       }),
       services: servicesList,

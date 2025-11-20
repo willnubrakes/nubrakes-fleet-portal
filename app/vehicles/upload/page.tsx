@@ -8,12 +8,15 @@ import { useToast } from "@/components/ToastProvider";
 import type { Vehicle } from "@/context/VehicleContext";
 
 interface CSVRow {
+  name?: string;
   year?: string;
   make?: string;
   model?: string;
   vin?: string;
   license_plate?: string;
   licensePlate?: string;
+  license_plate_state?: string;
+  licensePlateState?: string;
 }
 
 export default function UploadVehiclesPage() {
@@ -37,12 +40,15 @@ export default function UploadVehiclesPage() {
         const errors: string[] = [];
 
         results.data.forEach((row, index) => {
+          const name = row.name?.trim() || "";
           const year = row.year?.trim();
           const make = row.make?.trim();
           const model = row.model?.trim();
           const vin = row.vin?.trim();
           const licensePlate =
             row.license_plate?.trim() || row.licensePlate?.trim() || "";
+          const licensePlateState =
+            row.license_plate_state?.trim() || row.licensePlateState?.trim() || "";
 
           if (!year || !make || !model || !vin) {
             errors.push(
@@ -51,15 +57,17 @@ export default function UploadVehiclesPage() {
             return;
           }
 
-          const name = licensePlate || null;
+          // Use provided name, or default to license plate, or empty string
+          const vehicleName = name || licensePlate || "";
 
           validVehicles.push({
-            name: name || "",
+            name: vehicleName,
             year,
             make,
             model,
             vin,
             licensePlate,
+            licensePlateState,
           });
         });
 
@@ -123,7 +131,21 @@ export default function UploadVehiclesPage() {
             <code className="bg-gray-100 px-2 py-1 rounded">make</code>,{" "}
             <code className="bg-gray-100 px-2 py-1 rounded">model</code>,{" "}
             <code className="bg-gray-100 px-2 py-1 rounded">vin</code>,{" "}
-            <code className="bg-gray-100 px-2 py-1 rounded">license_plate</code>
+            <code className="bg-gray-100 px-2 py-1 rounded">license_plate</code>,{" "}
+            <code className="bg-gray-100 px-2 py-1 rounded">license_plate_state</code>
+            <br />
+            <span className="text-gray-400 mt-1 block">
+              Optional: <code className="bg-gray-100 px-2 py-1 rounded">name</code> (defaults to license plate if not provided)
+            </span>
+          </p>
+          <p className="mt-2 text-sm">
+            <a
+              href="/sample-vehicles.csv"
+              download
+              className="text-[#f04f23] hover:underline font-medium"
+            >
+              📥 Download sample CSV file
+            </a>
           </p>
         </div>
 
@@ -167,6 +189,9 @@ export default function UploadVehiclesPage() {
                   <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     License Plate
                   </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    State
+                  </th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
@@ -189,6 +214,9 @@ export default function UploadVehiclesPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       {vehicle.licensePlate}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      {vehicle.licensePlateState || "—"}
                     </td>
                   </tr>
                 ))}
