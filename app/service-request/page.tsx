@@ -125,16 +125,29 @@ export default function ServiceRequestPage() {
     };
 
     try {
-      const response = await fetch("/api/webhook", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      // In static deployment (GitHub Pages), API routes don't work
+      // Log to console for demo purposes
+      // In production, you'd point this to your actual webhook URL
+      const isStatic = typeof window !== "undefined" && window.location.hostname.includes("github.io");
+      
+      if (isStatic) {
+        // For static deployment, just log the payload
+        console.log("Service Request Payload (would send to webhook):", payload);
+        // In a real scenario, you'd fetch to an external webhook URL here
+        // await fetch("https://your-zapier-webhook-url.com", { ... });
+      } else {
+        // In development, use the API route
+        const response = await fetch("/api/webhook", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
 
-      if (!response.ok) {
-        throw new Error("Failed to submit request");
+        if (!response.ok) {
+          throw new Error("Failed to submit request");
+        }
       }
 
       setSubmittedData({
