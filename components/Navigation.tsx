@@ -93,11 +93,11 @@ export function Navigation() {
             </a>
             <div className="flex items-center space-x-2 pl-4 border-l border-gray-600">
               <div className="w-8 h-8 rounded-full bg-gray-600 flex items-center justify-center">
-                <span className="text-sm font-medium">U</span>
+                <span className="text-sm font-medium">J</span>
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-medium">Organization Name</span>
-                <span className="text-xs text-gray-400">Fleet Manager</span>
+                <span className="text-sm font-medium">City of Houston</span>
+                <span className="text-xs text-gray-400">John Doe</span>
               </div>
             </div>
           </div>

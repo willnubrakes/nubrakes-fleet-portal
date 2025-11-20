@@ -9,27 +9,29 @@ import { useVehicles } from "@/context/VehicleContext";
 import { useToast } from "@/components/ToastProvider";
 import { SubmitSuccessDialog } from "@/components/SubmitSuccessDialog";
 import { ProgressIndicator } from "@/components/ProgressIndicator";
-import { TimeWindowChips } from "@/components/ui/TimeWindowChips";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 
 const AVAILABLE_SERVICES = [
-  "Brake Pad Replacement",
-  "Brake Rotor Replacement",
-  "Brake Caliper Replacement",
-  "Battery Replacement",
-  "Oil Change",
+  "Brake Pads",
+  "Brake Rotors",
+  "Brake Fluid Exchange",
+  "Brake Caliper",
+  "Brake Hose Replacement",
+  "Brake Fluid Full System Flush",
+  "Battery Inspection and Replacement",
   "Other",
 ];
 
-const SERVICE_CATEGORIES = {
-  Brakes: ["Brake Pad Replacement", "Brake Rotor Replacement", "Brake Caliper Replacement"],
-  "Oil Change": ["Oil Change"],
-  Battery: ["Battery Replacement"],
-  Other: ["Other"],
-};
+// Services that require front/rear/both/unsure selection
+const SERVICES_REQUIRING_LOCATION = [
+  "Brake Pads",
+  "Brake Rotors",
+  "Brake Caliper",
+  "Brake Hose Replacement",
+];
 
-const TIME_WINDOWS = ["Morning", "Afternoon", "Anytime"];
+type ServiceLocation = "Front" | "Rear" | "Both" | "Unsure";
 
 const STEPS = [
   "Select Vehicles",
@@ -78,14 +80,18 @@ export default function ServiceRequestPage() {
   const [selectedVehicles, setSelectedVehicles] = useState<string[]>([]);
   const [vehicleServices, setVehicleServices] = useState<Record<string, string[]>>({});
   const [vehicleOtherServices, setVehicleOtherServices] = useState<Record<string, string>>({});
+  const [vehicleServiceLocations, setVehicleServiceLocations] = useState<Record<string, Record<string, ServiceLocation>>>({});
   const [preferredDate, setPreferredDate] = useState<Date | null>(null);
-  const [isFlexible, setIsFlexible] = useState(false);
-  const [preferredTime, setPreferredTime] = useState("");
+  const [datePreference, setDatePreference] = useState<"date" | "flexible">("date");
+  const [timePreference, setTimePreference] = useState<"window" | "flexible">("window");
+  const [startTime, setStartTime] = useState("");
+  const [endTime, setEndTime] = useState("");
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [notesExpanded, setNotesExpanded] = useState(false);
+  const [servicesExpanded, setServicesExpanded] = useState(false);
   const [submittedData, setSubmittedData] = useState<{
     vehicles: Array<{
       name: string;
@@ -108,6 +114,11 @@ export default function ServiceRequestPage() {
         });
         setVehicleOtherServices((others) => {
           const updated = { ...others };
+          delete updated[vehicleId];
+          return updated;
+        });
+        setVehicleServiceLocations((locations) => {
+          const updated = { ...locations };
           delete updated[vehicleId];
           return updated;
         });
@@ -134,6 +145,11 @@ export default function ServiceRequestPage() {
       });
       setVehicleOtherServices((others) => {
         const updated = { ...others };
+        filteredIds.forEach((id) => delete updated[id]);
+        return updated;
+      });
+      setVehicleServiceLocations((locations) => {
+        const updated = { ...locations };
         filteredIds.forEach((id) => delete updated[id]);
         return updated;
       });
@@ -164,6 +180,22 @@ export default function ServiceRequestPage() {
             return updated;
           });
         }
+        // Clear location if service requires it
+        if (SERVICES_REQUIRING_LOCATION.includes(service)) {
+          setVehicleServiceLocations((locations) => {
+            const updated = { ...locations };
+            if (updated[vehicleId]) {
+              const vehicleLocations = { ...updated[vehicleId] };
+              delete vehicleLocations[service];
+              if (Object.keys(vehicleLocations).length === 0) {
+                delete updated[vehicleId];
+              } else {
+                updated[vehicleId] = vehicleLocations;
+              }
+            }
+            return updated;
+          });
+        }
         return {
           ...prev,
           [vehicleId]: vehicleServiceList.filter((s) => s !== service),
@@ -175,6 +207,16 @@ export default function ServiceRequestPage() {
         };
       }
     });
+  };
+
+  const handleLocationChange = (vehicleId: string, service: string, location: ServiceLocation) => {
+    setVehicleServiceLocations((prev) => ({
+      ...prev,
+      [vehicleId]: {
+        ...(prev[vehicleId] || {}),
+        [service]: location,
+      },
+    }));
   };
 
   const handleSelectAllServicesForVehicle = (vehicleId: string) => {
@@ -191,12 +233,18 @@ export default function ServiceRequestPage() {
         delete updated[vehicleId];
         return updated;
       });
+      setVehicleServiceLocations((locations) => {
+        const updated = { ...locations };
+        delete updated[vehicleId];
+        return updated;
+      });
     } else {
       // Select all
       setVehicleServices((prev) => ({
         ...prev,
         [vehicleId]: [...AVAILABLE_SERVICES],
       }));
+      // Note: Location selection will be required when user tries to proceed
     }
   };
 
@@ -234,14 +282,25 @@ export default function ServiceRequestPage() {
   };
 
   const validateStep3 = (): boolean => {
-    if (!isFlexible && !preferredDate) {
-      showToast("Please select a preferred date or mark as flexible", "error");
+    if (datePreference === "date" && !preferredDate) {
+      showToast("Please select a preferred date or choose flexible on date", "error");
       return false;
     }
 
-    if (!preferredTime) {
-      showToast("Please select a preferred time window", "error");
-      return false;
+    if (timePreference === "window") {
+      if (!startTime || !endTime) {
+        showToast("Please enter both start and end times or choose flexible on time", "error");
+        return false;
+      }
+      // Validate that end time is after start time
+      const [startHour, startMin] = startTime.split(":").map(Number);
+      const [endHour, endMin] = endTime.split(":").map(Number);
+      const startMinutes = startHour * 60 + startMin;
+      const endMinutes = endHour * 60 + endMin;
+      if (endMinutes <= startMinutes) {
+        showToast("End time must be after start time", "error");
+        return false;
+      }
     }
     return true;
   };
@@ -279,11 +338,18 @@ export default function ServiceRequestPage() {
       const vehicle = vehicles.find((v) => v.id === id);
       const services = vehicleServices[id] || [];
       const otherText = vehicleOtherServices[id] || "";
+      const locations = vehicleServiceLocations[id] || {};
       
-      // Map services, replacing "Other" with the actual text
-      const servicesList = services.map((service) =>
-        service === "Other" ? otherText.trim() : service
-      );
+      // Map services, replacing "Other" with the actual text and combining with location
+      const servicesList = services.map((service) => {
+        if (service === "Other") {
+          return otherText.trim();
+        }
+        if (SERVICES_REQUIRING_LOCATION.includes(service) && locations[service]) {
+          return `${service} - ${locations[service]}`;
+        }
+        return service;
+      });
 
       return {
         id: vehicle?.id,
@@ -297,8 +363,8 @@ export default function ServiceRequestPage() {
 
     const payload = {
       vehicles: vehiclesWithServices,
-      preferredDate: isFlexible ? null : preferredDate?.toISOString().split("T")[0] || null,
-      preferredTime,
+      preferredDate: datePreference === "flexible" ? null : preferredDate?.toISOString().split("T")[0] || null,
+      preferredTime: timePreference === "flexible" ? "Flexible" : `${startTime} - ${endTime}`,
       notes: notes.trim() || null,
       submittedAt: new Date().toISOString(),
     };
@@ -334,8 +400,8 @@ export default function ServiceRequestPage() {
           name: v.name || v.vin || "Unknown",
           services: v.services,
         })),
-        preferredDate: isFlexible ? "Flexible" : preferredDate?.toLocaleDateString() || "",
-        preferredTime,
+        preferredDate: datePreference === "flexible" ? "Flexible" : preferredDate?.toLocaleDateString() || "",
+        preferredTime: timePreference === "flexible" ? "Flexible" : `${startTime} - ${endTime}`,
         notes: notes.trim(),
       });
 
@@ -345,9 +411,12 @@ export default function ServiceRequestPage() {
       setSelectedVehicles([]);
       setVehicleServices({});
       setVehicleOtherServices({});
+      setVehicleServiceLocations({});
       setPreferredDate(null);
-      setIsFlexible(false);
-      setPreferredTime("");
+      setDatePreference("date");
+      setTimePreference("window");
+      setStartTime("");
+      setEndTime("");
       setNotes("");
     } catch (error) {
       showToast("Failed to submit request. Please try again.", "error");
@@ -606,58 +675,114 @@ export default function ServiceRequestPage() {
                               : "Select All"}
                           </button>
                         </div>
-                        <div className="space-y-4">
-                          {Object.entries(SERVICE_CATEGORIES).map(([category, services]) => (
-                            <div key={category}>
-                              <h4 className="text-sm font-semibold text-gray-700 mb-2">{category}</h4>
-                              <div className="space-y-2">
-                                {services.map((service) => (
-                                  <label
-                                    key={service}
-                                    className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white cursor-pointer bg-white"
-                                  >
-                                    <input
-                                      type="checkbox"
-                                      checked={vehicleServiceList.includes(service)}
-                                      onChange={() => handleServiceToggle(vehicleId, service)}
-                                      className="mr-3 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
-                                    />
-                                    <span className="mr-2 text-gray-600">
-                                      {getServiceIcon(service)}
-                                    </span>
-                                    <span className="font-medium">{service}</span>
-                                  </label>
-                                ))}
+                        <div className="space-y-2">
+                          {(servicesExpanded ? AVAILABLE_SERVICES : AVAILABLE_SERVICES.slice(0, 3)).map((service) => {
+                            const isSelected = vehicleServiceList.includes(service);
+                            const requiresLocation = SERVICES_REQUIRING_LOCATION.includes(service);
+                            const location = vehicleServiceLocations[vehicleId]?.[service];
+                            
+                            return (
+                              <div
+                                key={service}
+                                className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white bg-white flex-wrap gap-2"
+                              >
+                                <label className="flex items-center cursor-pointer flex-1 min-w-[200px]">
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    onChange={() => handleServiceToggle(vehicleId, service)}
+                                    className="mr-3 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
+                                  />
+                                  <span className="mr-2 text-gray-600">
+                                    {getServiceIcon(service)}
+                                  </span>
+                                  <span className="font-medium">{service}</span>
+                                </label>
+                                {isSelected && requiresLocation && (
+                                  <>
+                                    <span className="text-gray-300 mx-1 hidden sm:inline">|</span>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <span className="text-sm text-gray-700 font-semibold">Location:</span>
+                                      {(["Front", "Rear", "Both", "Unsure"] as ServiceLocation[]).map((loc) => (
+                                        <button
+                                          key={loc}
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleLocationChange(vehicleId, service, loc);
+                                          }}
+                                          className={`px-3 py-1.5 rounded-md text-sm font-medium transition-all ${
+                                            location === loc
+                                              ? "bg-gray-200 text-gray-900 border-2 border-gray-400 shadow-sm"
+                                              : "bg-white text-gray-700 border border-gray-300 hover:border-gray-400 hover:bg-gray-50"
+                                          }`}
+                                        >
+                                          {loc}
+                                        </button>
+                                      ))}
+                                    </div>
+                                  </>
+                                )}
+                                {isSelected && service === "Other" && (
+                                  <>
+                                    <span className="text-gray-300 mx-1 hidden sm:inline">|</span>
+                                    <div className="flex items-center gap-2 flex-wrap flex-1 min-w-[200px]">
+                                      <span className="text-sm text-gray-700 font-semibold">Please specify:</span>
+                                      <input
+                                        type="text"
+                                        id={`other-service-${vehicleId}`}
+                                        value={otherServiceText}
+                                        onChange={(e) =>
+                                          setVehicleOtherServices((prev) => ({
+                                            ...prev,
+                                            [vehicleId]: e.target.value,
+                                          }))
+                                        }
+                                        onClick={(e) => e.stopPropagation()}
+                                        placeholder="Enter service description"
+                                        className="flex-1 min-w-[200px] px-3 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                                      />
+                                    </div>
+                                  </>
+                                )}
                               </div>
-                              {category !== Object.keys(SERVICE_CATEGORIES)[Object.keys(SERVICE_CATEGORIES).length - 1] && (
-                                <div className="border-t border-gray-200 my-4"></div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                        {vehicleServiceList.includes("Other") && (
-                          <div className="mt-4">
-                            <label
-                              htmlFor={`other-service-${vehicleId}`}
-                              className="block text-sm font-semibold text-gray-600 mb-2"
+                            );
+                          })}
+                          {!servicesExpanded && AVAILABLE_SERVICES.length > 3 && (
+                            <button
+                              type="button"
+                              onClick={() => setServicesExpanded(true)}
+                              className="mt-2 py-2.5 px-4 text-sm bg-transparent text-navy font-semibold hover:bg-navy/10 hover:border-navy/80 rounded-md border border-navy/50 transition-all flex items-center gap-2 group"
                             >
-                              Please specify:
-                            </label>
-                            <input
-                              type="text"
-                              id={`other-service-${vehicleId}`}
-                              value={otherServiceText}
-                              onChange={(e) =>
-                                setVehicleOtherServices((prev) => ({
-                                  ...prev,
-                                  [vehicleId]: e.target.value,
-                                }))
-                              }
-                              placeholder="Enter service description"
-                              className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
-                            />
-                          </div>
-                        )}
+                              <span>Expand All Service Options</span>
+                              <svg 
+                                className="w-4 h-4 transition-transform group-hover:translate-y-0.5" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                          )}
+                          {servicesExpanded && (
+                            <button
+                              type="button"
+                              onClick={() => setServicesExpanded(false)}
+                              className="mt-2 py-2.5 px-4 text-sm bg-transparent text-navy font-semibold hover:bg-navy/10 hover:border-navy/80 rounded-md border border-navy/50 transition-all flex items-center gap-2 group"
+                            >
+                              <span>Collapse Service Options</span>
+                              <svg 
+                                className="w-4 h-4 transition-transform rotate-180 group-hover:-translate-y-0.5" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                              </svg>
+                            </button>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -673,49 +798,157 @@ export default function ServiceRequestPage() {
                 Preferred Schedule <span className="text-red-500">*</span>
               </h2>
 
+              {/* Preferred Date Section */}
               <div className="mb-6">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={isFlexible}
-                    onChange={(e) => setIsFlexible(e.target.checked)}
-                    className="mr-2 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
-                  />
-                  <span className="font-semibold text-gray-600">Flexible on date</span>
+                <label className="block text-sm font-semibold text-gray-600 mb-3">
+                  Preferred Date <span className="text-red-500">*</span>
                 </label>
+                <div className="space-y-3">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="date-preference"
+                      value="date"
+                      checked={datePreference === "date"}
+                      onChange={(e) => {
+                        if (e.target.checked && datePreference === "flexible") {
+                          setPreferredDate(null);
+                        }
+                        setDatePreference("date");
+                      }}
+                      className="mr-3 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300"
+                    />
+                    <span className="text-gray-700">Date selection</span>
+                  </label>
+                  {datePreference === "date" && (
+                    <div className="ml-7 mb-3">
+                      <DatePicker
+                        id="preferred-date"
+                        selected={preferredDate}
+                        onChange={(date: Date | null) => setPreferredDate(date)}
+                        minDate={new Date()}
+                        dateFormat="MMMM d, yyyy"
+                        className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                        placeholderText="Select a date"
+                        showPopperArrow={false}
+                      />
+                    </div>
+                  )}
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="date-preference"
+                      value="flexible"
+                      checked={datePreference === "flexible"}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setDatePreference("flexible");
+                          setPreferredDate(null);
+                        }
+                      }}
+                      className="mr-3 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300"
+                    />
+                    <span className="text-gray-700">Flexible on date</span>
+                  </label>
+                </div>
               </div>
 
-              {!isFlexible && (
-                <div className="mb-6">
-                  <label
-                    htmlFor="preferred-date"
-                    className="block text-sm font-semibold text-gray-600 mb-2"
-                  >
-                    Preferred Date
-                  </label>
-                  <DatePicker
-                    id="preferred-date"
-                    selected={preferredDate}
-                    onChange={(date: Date | null) => setPreferredDate(date)}
-                    minDate={new Date()}
-                    dateFormat="MMMM d, yyyy"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
-                    placeholderText="Select a date"
-                    showPopperArrow={false}
-                  />
-                </div>
-              )}
-
+              {/* Preferred Time Window Section */}
               <div className="mb-6">
-                <label className="block text-sm font-semibold text-gray-600 mb-2">
+                <label className="block text-sm font-semibold text-gray-600 mb-3">
                   Preferred Time Window <span className="text-red-500">*</span>
                 </label>
-                <TimeWindowChips
-                  value={preferredTime}
-                  onChange={setPreferredTime}
-                />
+                <div className="space-y-3">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="time-preference"
+                      value="window"
+                      checked={timePreference === "window"}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setTimePreference("window");
+                          setStartTime("");
+                          setEndTime("");
+                        }
+                      }}
+                      className="mr-3 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300"
+                    />
+                    <span className="text-gray-700">Select time window</span>
+                  </label>
+                  {timePreference === "window" && (
+                    <div className="ml-7 mb-3 flex gap-4 items-end">
+                      <div>
+                        <label
+                          htmlFor="start-time"
+                          className="block text-xs font-medium text-gray-600 mb-1"
+                        >
+                          Start Time
+                        </label>
+                        <div
+                          onClick={() => {
+                            const input = document.getElementById("start-time");
+                            input?.focus();
+                            input?.showPicker?.();
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <input
+                            type="time"
+                            id="start-time"
+                            value={startTime}
+                            onChange={(e) => setStartTime(e.target.value)}
+                            className="w-32 px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label
+                          htmlFor="end-time"
+                          className="block text-xs font-medium text-gray-600 mb-1"
+                        >
+                          End Time
+                        </label>
+                        <div
+                          onClick={() => {
+                            const input = document.getElementById("end-time");
+                            input?.focus();
+                            input?.showPicker?.();
+                          }}
+                          className="cursor-pointer"
+                        >
+                          <input
+                            type="time"
+                            id="end-time"
+                            value={endTime}
+                            onChange={(e) => setEndTime(e.target.value)}
+                            className="w-32 px-3 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent cursor-pointer"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="time-preference"
+                      value="flexible"
+                      checked={timePreference === "flexible"}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setTimePreference("flexible");
+                          setStartTime("");
+                          setEndTime("");
+                        }
+                      }}
+                      className="mr-3 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300"
+                    />
+                    <span className="text-gray-700">Flexible on time</span>
+                  </label>
+                </div>
               </div>
 
+              {/* Notes Section */}
               <div>
                 <label
                   htmlFor="notes"
