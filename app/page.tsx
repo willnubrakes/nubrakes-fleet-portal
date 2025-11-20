@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+// Base path for GitHub Pages - should match next.config.ts
+const BASE_PATH = process.env.NODE_ENV === "production" ? "/nubrakes-fleet-portal" : "";
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
@@ -8,7 +11,7 @@ export default function Home() {
         <div className="flex items-center justify-center gap-6">
           <div className="flex items-center gap-4">
             <img
-              src="/logo.png"
+              src={`${BASE_PATH}/logo.png`}
               alt="NuBrakes"
               width={60}
               height={60}

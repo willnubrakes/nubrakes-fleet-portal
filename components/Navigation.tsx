@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+// Base path for GitHub Pages - should match next.config.ts
+const BASE_PATH = process.env.NODE_ENV === "production" ? "/nubrakes-fleet-portal" : "";
+
 export function Navigation() {
   const pathname = usePathname();
 
@@ -22,7 +25,7 @@ export function Navigation() {
         <div className="flex justify-between items-center py-4">
           <Link href="/" className="flex items-center gap-3">
             <img
-              src="/logo.png"
+              src={`${BASE_PATH}/logo.png`}
               alt="NuBrakes"
               width={40}
               height={40}
