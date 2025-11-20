@@ -4,10 +4,13 @@ interface SubmitSuccessDialogProps {
   isOpen: boolean;
   onClose: () => void;
   submittedData?: {
-    vehicles: string[];
-    services: string[];
+    vehicles: Array<{
+      name: string;
+      services: string[];
+    }>;
     preferredDate: string;
     preferredTime: string;
+    notes: string;
   };
 }
 
@@ -48,18 +51,27 @@ export function SubmitSuccessDialog({
         {submittedData && (
           <div className="bg-gray-50 rounded-lg p-6 mb-6">
             <h3 className="font-semibold text-navy mb-4">Request Details:</h3>
-            <div className="space-y-3 text-sm">
+            <div className="space-y-4 text-sm">
               <div>
-                <span className="font-medium text-gray-700">Vehicles:</span>{" "}
-                <span className="text-gray-600">
-                  {submittedData.vehicles.join(", ")}
-                </span>
-              </div>
-              <div>
-                <span className="font-medium text-gray-700">Services:</span>{" "}
-                <span className="text-gray-600">
-                  {submittedData.services.join(", ")}
-                </span>
+                <span className="font-medium text-gray-700">Vehicles & Services:</span>
+                <div className="mt-2 space-y-3">
+                  {submittedData.vehicles.map((vehicle, index) => (
+                    <div key={index} className="bg-white rounded-lg p-3 border border-gray-200">
+                      <div className="font-medium text-gray-900 mb-1">{vehicle.name}</div>
+                      <div className="text-gray-600 ml-4">
+                        {vehicle.services.length > 0 ? (
+                          <ul className="list-disc list-inside space-y-1">
+                            {vehicle.services.map((service, serviceIndex) => (
+                              <li key={serviceIndex}>{service}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <span className="text-gray-400">No services selected</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
               <div>
                 <span className="font-medium text-gray-700">Preferred Date:</span>{" "}
@@ -73,6 +85,14 @@ export function SubmitSuccessDialog({
                   {submittedData.preferredTime}
                 </span>
               </div>
+              {submittedData.notes && (
+                <div>
+                  <span className="font-medium text-gray-700">Notes:</span>
+                  <div className="text-gray-600 mt-1 whitespace-pre-wrap">
+                    {submittedData.notes}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
