@@ -11,7 +11,7 @@ export function Toast({ message, type, onClose }: ToastProps) {
     type === "success"
       ? "bg-green"
       : type === "error"
-      ? "bg-[#f04f23]"
+      ? "bg-[#F15A29]"
       : "bg-navy";
 
   return (

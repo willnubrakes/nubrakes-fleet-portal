@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import Papa from "papaparse";
 import { useVehicles } from "@/context/VehicleContext";
 import { useToast } from "@/components/ToastProvider";
+import { Card } from "@/components/ui/Card";
+import { Table } from "@/components/ui/Table";
+import { Button } from "@/components/ui/Button";
 import type { Vehicle } from "@/context/VehicleContext";
 
 interface CSVRow {
@@ -19,12 +22,23 @@ interface CSVRow {
   licensePlateState?: string;
 }
 
+interface ValidationError {
+  row: number;
+  message: string;
+}
+
+interface PreviewVehicle extends Omit<Vehicle, "id"> {
+  _rowIndex?: number;
+  _errors?: string[];
+}
+
 export default function UploadVehiclesPage() {
   const router = useRouter();
   const { addVehicles } = useVehicles();
   const { showToast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [previewData, setPreviewData] = useState<Omit<Vehicle, "id">[]>([]);
+  const [previewData, setPreviewData] = useState<PreviewVehicle[]>([]);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,12 +46,15 @@ export default function UploadVehiclesPage() {
     if (!file) return;
 
     setIsProcessing(true);
+    setPreviewData([]);
+    setValidationErrors([]);
+
     Papa.parse<CSVRow>(file, {
       header: true,
       skipEmptyLines: true,
       complete: (results) => {
-        const validVehicles: Omit<Vehicle, "id">[] = [];
-        const errors: string[] = [];
+        const validVehicles: PreviewVehicle[] = [];
+        const errors: ValidationError[] = [];
 
         results.data.forEach((row, index) => {
           const name = row.name?.trim() || "";
@@ -50,35 +67,53 @@ export default function UploadVehiclesPage() {
           const licensePlateState =
             row.license_plate_state?.trim() || row.licensePlateState?.trim() || "";
 
-          if (!year || !make || !model || !vin) {
-            errors.push(
-              `Row ${index + 2}: Missing required fields (year, make, model, or vin)`
-            );
-            return;
+          const rowErrors: string[] = [];
+          
+          if (!year) rowErrors.push("Missing year");
+          if (!make) rowErrors.push("Missing make");
+          if (!model) rowErrors.push("Missing model");
+          if (!vin) rowErrors.push("Missing VIN");
+
+          if (rowErrors.length > 0) {
+            errors.push({
+              row: index + 2, // +2 because index is 0-based and we skip header
+              message: rowErrors.join(", "),
+            });
           }
 
           // Use provided name, or default to license plate, or empty string
           const vehicleName = name || licensePlate || "";
 
-          validVehicles.push({
+          const vehicle: PreviewVehicle = {
             name: vehicleName,
-            year,
-            make,
-            model,
-            vin,
+            year: year || "",
+            make: make || "",
+            model: model || "",
+            vin: vin || "",
             licensePlate,
             licensePlateState,
-          });
+            _rowIndex: index + 2,
+            _errors: rowErrors.length > 0 ? rowErrors : undefined,
+          };
+
+          validVehicles.push(vehicle);
         });
+
+        setValidationErrors(errors);
+        setPreviewData(validVehicles.slice(0, 5)); // Show first 5 rows
 
         if (errors.length > 0) {
           showToast(
-            `${errors.length} row(s) skipped due to missing data. ${validVehicles.length} valid row(s) found.`,
+            `${errors.length} row(s) have validation errors. ${validVehicles.length - errors.length} valid row(s) found.`,
             "info"
+          );
+        } else {
+          showToast(
+            `${validVehicles.length} valid vehicle(s) found.`,
+            "success"
           );
         }
 
-        setPreviewData(validVehicles);
         setIsProcessing(false);
       },
       error: (error) => {
@@ -89,32 +124,103 @@ export default function UploadVehiclesPage() {
   };
 
   const handleConfirmImport = () => {
-    if (previewData.length === 0) {
+    const validVehicles = previewData.filter((v) => !v._errors || v._errors.length === 0);
+    
+    if (validVehicles.length === 0) {
       showToast("No valid vehicles to import", "error");
       return;
     }
 
-    addVehicles(previewData);
+    // Remove internal fields before adding
+    const vehiclesToAdd = validVehicles.map(({ _rowIndex, _errors, ...vehicle }) => vehicle);
+    
+    addVehicles(vehiclesToAdd);
     showToast(
-      `Successfully imported ${previewData.length} vehicle(s)!`,
+      `Successfully imported ${vehiclesToAdd.length} vehicle(s)!`,
       "success"
     );
     setPreviewData([]);
+    setValidationErrors([]);
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
     }
     router.push("/vehicles");
   };
 
+  const columns = [
+    {
+      key: "name",
+      label: "Name",
+      render: (value: string, row: PreviewVehicle) => (
+        <span className={row._errors ? "text-red-600" : ""}>
+          {value || "—"}
+        </span>
+      ),
+    },
+    {
+      key: "year",
+      label: "Year",
+      render: (value: string, row: PreviewVehicle) => (
+        <span className={row._errors ? "text-red-600" : ""}>{value || "—"}</span>
+      ),
+    },
+    {
+      key: "make",
+      label: "Make",
+      render: (value: string, row: PreviewVehicle) => (
+        <span className={row._errors ? "text-red-600" : ""}>{value || "—"}</span>
+      ),
+    },
+    {
+      key: "model",
+      label: "Model",
+      render: (value: string, row: PreviewVehicle) => (
+        <span className={row._errors ? "text-red-600" : ""}>{value || "—"}</span>
+      ),
+    },
+    {
+      key: "vin",
+      label: "VIN",
+      truncate: true,
+      render: (value: string, row: PreviewVehicle) => (
+        <span className={`font-mono ${row._errors ? "text-red-600" : ""}`}>
+          {value || "—"}
+        </span>
+      ),
+    },
+    {
+      key: "licensePlate",
+      label: "License Plate",
+    },
+    {
+      key: "licensePlateState",
+      label: "State",
+      render: (value: string) => <span>{value || "—"}</span>,
+    },
+    {
+      key: "errors",
+      label: "Errors",
+      render: (_: any, row: PreviewVehicle) => (
+        <span className="text-sm text-red-600">
+          {row._errors ? row._errors.join(", ") : "✓"}
+        </span>
+      ),
+    },
+  ];
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-navy mb-8">Upload Vehicles (CSV)</h1>
 
-      <div className="bg-white rounded-lg shadow-md p-8 mb-8">
+      <Card
+        title="CSV Import"
+        description="Upload your full fleet roster at once. We validate your file before saving anything."
+        className="mb-8"
+      >
         <div className="mb-6">
           <label
             htmlFor="csv-file"
-            className="block text-sm font-medium text-gray-700 mb-2"
+            className="block text-sm font-semibold text-gray-600 mb-2"
           >
             Select CSV File
           </label>
@@ -124,9 +230,9 @@ export default function UploadVehiclesPage() {
             id="csv-file"
             accept=".csv"
             onChange={handleFileSelect}
-            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#f04f23] file:text-white hover:file:bg-[#d43e1a] cursor-pointer"
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-medium file:bg-[#F15A29] file:text-white hover:file:bg-[#d43e1a] cursor-pointer"
           />
-          <p className="mt-2 text-sm text-gray-500">
+          <p className="mt-4 text-sm text-gray-600">
             Expected columns: <code className="bg-gray-100 px-2 py-1 rounded">year</code>,{" "}
             <code className="bg-gray-100 px-2 py-1 rounded">make</code>,{" "}
             <code className="bg-gray-100 px-2 py-1 rounded">model</code>,{" "}
@@ -138,11 +244,11 @@ export default function UploadVehiclesPage() {
               Optional: <code className="bg-gray-100 px-2 py-1 rounded">name</code> (defaults to license plate if not provided)
             </span>
           </p>
-          <p className="mt-2 text-sm">
+          <p className="mt-4 text-sm">
             <a
               href="/sample-vehicles.csv"
               download
-              className="text-[#f04f23] hover:underline font-medium"
+              className="text-[#F15A29] hover:underline font-medium"
             >
               📥 Download sample CSV file
             </a>
@@ -152,89 +258,56 @@ export default function UploadVehiclesPage() {
         {isProcessing && (
           <div className="text-center py-4 text-gray-600">Processing CSV...</div>
         )}
-      </div>
+      </Card>
 
       {previewData.length > 0 && (
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
-          <div className="p-6 border-b border-gray-200 flex justify-between items-center">
-            <h2 className="text-xl font-semibold text-navy">
-              Preview ({previewData.length} vehicles)
-            </h2>
-            <button
-              onClick={handleConfirmImport}
-              className="bg-green text-white px-6 py-2 rounded-md hover:bg-green/90 transition-colors font-medium"
-            >
-              Confirm Import
-            </button>
+        <Card
+          title={`Preview (${previewData.length} vehicles shown, ${validationErrors.length} with errors)`}
+          className="mb-8"
+        >
+          <div className="mb-4">
+            <p className="text-sm text-gray-600 mb-4">
+              Showing first 5 rows. Rows with errors are highlighted in red.
+            </p>
+            {validationErrors.length > 0 && (
+              <div className="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
+                <p className="text-sm font-semibold text-red-800 mb-2">
+                  Validation Errors Found:
+                </p>
+                <ul className="text-sm text-red-700 list-disc list-inside space-y-1">
+                  {validationErrors.slice(0, 10).map((error) => (
+                    <li key={error.row}>
+                      Row {error.row}: {error.message}
+                    </li>
+                  ))}
+                  {validationErrors.length > 10 && (
+                    <li>... and {validationErrors.length - 10} more errors</li>
+                  )}
+                </ul>
+              </div>
+            )}
           </div>
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Year
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Make
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Model
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    VIN
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    License Plate
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    State
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {previewData.map((vehicle, index) => (
-                  <tr key={index} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {vehicle.name || "—"}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.year}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.make}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.model}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
-                      {vehicle.vin}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.licensePlate}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {vehicle.licensePlateState || "—"}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            <Table
+              columns={columns}
+              data={previewData}
+              keyExtractor={(row, index) => String(row._rowIndex || index)}
+              maxHeight="400px"
+            />
           </div>
-        </div>
+          <div className="mt-6 flex justify-end">
+            <Button onClick={handleConfirmImport} variant="primary">
+              Confirm Import ({previewData.filter((v) => !v._errors || v._errors.length === 0).length} valid vehicles)
+            </Button>
+          </div>
+        </Card>
       )}
 
       <div className="mt-8">
-        <button
-          onClick={() => router.back()}
-          className="px-6 py-2 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors font-medium"
-        >
+        <Button variant="secondary" onClick={() => router.back()}>
           Back to Vehicles
-        </button>
+        </Button>
       </div>
     </div>
   );
 }
-

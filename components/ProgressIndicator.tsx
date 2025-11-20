@@ -12,8 +12,8 @@ export function ProgressIndicator({
   stepLabels,
 }: ProgressIndicatorProps) {
   return (
-    <div className="mb-8">
-      <div className="flex items-center justify-between max-w-2xl mx-auto">
+    <div className="mb-6">
+      <div className="flex items-center max-w-2xl">
         {stepLabels.map((label, index) => {
           const stepNumber = index + 1;
           const isCompleted = stepNumber < currentStep;
@@ -21,9 +21,9 @@ export function ProgressIndicator({
           const isPending = stepNumber > currentStep;
 
           return (
-            <div key={stepNumber} className="flex items-center flex-1">
+            <div key={stepNumber} className="flex items-center">
               {/* Step Circle */}
-              <div className="flex flex-col items-center flex-1">
+              <div className="flex flex-col items-center">
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-colors ${
                     isCompleted
@@ -58,7 +58,7 @@ export function ProgressIndicator({
                   )}
                 </div>
                 <span
-                  className={`mt-2 text-xs font-medium ${
+                  className={`mt-2 text-xs font-medium whitespace-nowrap ${
                     isCurrent
                       ? "text-green-500"
                       : isCompleted
@@ -73,9 +73,10 @@ export function ProgressIndicator({
               {/* Connector Line */}
               {index < totalSteps - 1 && (
                 <div
-                  className={`flex-1 h-0.5 mx-2 transition-colors ${
+                  className={`h-0.5 mx-3 transition-colors ${
                     stepNumber < currentStep ? "bg-green-500" : "bg-gray-300"
                   }`}
+                  style={{ width: "60px" }}
                 />
               )}
             </div>

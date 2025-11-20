@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useVehicles } from "@/context/VehicleContext";
 import { useToast } from "@/components/ToastProvider";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 export default function NewVehiclePage() {
   const router = useRouter();
@@ -65,210 +67,211 @@ export default function NewVehiclePage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-navy mb-8">Add New Vehicle</h1>
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-8">
-        <div className="space-y-6">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Name <span className="text-gray-400">(optional)</span>
-            </label>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              value={formData.name}
-              onChange={handleChange}
-              placeholder="Defaults to License Plate"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
-            />
-          </div>
+      <div className="max-w-[560px] mx-auto">
+        <Card>
+          <form onSubmit={handleSubmit}>
+            <div className="space-y-6">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="block text-sm font-semibold text-gray-600 mb-2"
+                >
+                  Name <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="name"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Defaults to License Plate"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                />
+              </div>
 
-          <div>
-            <label
-              htmlFor="year"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Year <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="year"
-              name="year"
-              value={formData.year}
-              onChange={handleChange}
-              required
-              placeholder="e.g., 2023"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
-            />
-          </div>
+              <div>
+                <label
+                  htmlFor="year"
+                  className="block text-sm font-semibold text-gray-600 mb-2"
+                >
+                  Year <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="year"
+                  name="year"
+                  value={formData.year}
+                  onChange={handleChange}
+                  required
+                  placeholder="e.g., 2023"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                />
+              </div>
 
-          <div>
-            <label
-              htmlFor="make"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Make <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="make"
-              name="make"
-              value={formData.make}
-              onChange={handleChange}
-              required
-              placeholder="e.g., Toyota"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
-            />
-          </div>
+              <div>
+                <label
+                  htmlFor="make"
+                  className="block text-sm font-semibold text-gray-600 mb-2"
+                >
+                  Make <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="make"
+                  name="make"
+                  value={formData.make}
+                  onChange={handleChange}
+                  required
+                  placeholder="e.g., Toyota"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                />
+              </div>
 
-          <div>
-            <label
-              htmlFor="model"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              Model <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="model"
-              name="model"
-              value={formData.model}
-              onChange={handleChange}
-              required
-              placeholder="e.g., Camry"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
-            />
-          </div>
+              <div>
+                <label
+                  htmlFor="model"
+                  className="block text-sm font-semibold text-gray-600 mb-2"
+                >
+                  Model <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="model"
+                  name="model"
+                  value={formData.model}
+                  onChange={handleChange}
+                  required
+                  placeholder="e.g., Camry"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                />
+              </div>
 
-          <div>
-            <label
-              htmlFor="vin"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              VIN <span className="text-red-500">*</span>
-            </label>
-            <input
-              type="text"
-              id="vin"
-              name="vin"
-              value={formData.vin}
-              onChange={handleChange}
-              required
-              placeholder="Vehicle Identification Number"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent font-mono"
-            />
-          </div>
+              <div>
+                <label
+                  htmlFor="vin"
+                  className="block text-sm font-semibold text-gray-600 mb-2"
+                >
+                  VIN <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  id="vin"
+                  name="vin"
+                  value={formData.vin}
+                  onChange={handleChange}
+                  required
+                  placeholder="Vehicle Identification Number"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent font-mono"
+                />
+              </div>
 
-          <div>
-            <label
-              htmlFor="licensePlate"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              License Plate <span className="text-gray-400">(optional)</span>
-            </label>
-            <input
-              type="text"
-              id="licensePlate"
-              name="licensePlate"
-              value={formData.licensePlate}
-              onChange={handleChange}
-              placeholder="e.g., ABC-1234"
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
-            />
-          </div>
+              <div>
+                <label
+                  htmlFor="licensePlate"
+                  className="block text-sm font-semibold text-gray-600 mb-2"
+                >
+                  License Plate <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <input
+                  type="text"
+                  id="licensePlate"
+                  name="licensePlate"
+                  value={formData.licensePlate}
+                  onChange={handleChange}
+                  placeholder="e.g., ABC-1234"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                />
+              </div>
 
-          <div>
-            <label
-              htmlFor="licensePlateState"
-              className="block text-sm font-medium text-gray-700 mb-2"
-            >
-              License Plate State <span className="text-gray-400">(optional)</span>
-            </label>
-            <select
-              id="licensePlateState"
-              name="licensePlateState"
-              value={formData.licensePlateState}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
-            >
-              <option value="">Select State</option>
-              <option value="AL">AL</option>
-              <option value="AK">AK</option>
-              <option value="AZ">AZ</option>
-              <option value="AR">AR</option>
-              <option value="CA">CA</option>
-              <option value="CO">CO</option>
-              <option value="CT">CT</option>
-              <option value="DE">DE</option>
-              <option value="FL">FL</option>
-              <option value="GA">GA</option>
-              <option value="HI">HI</option>
-              <option value="ID">ID</option>
-              <option value="IL">IL</option>
-              <option value="IN">IN</option>
-              <option value="IA">IA</option>
-              <option value="KS">KS</option>
-              <option value="KY">KY</option>
-              <option value="LA">LA</option>
-              <option value="ME">ME</option>
-              <option value="MD">MD</option>
-              <option value="MA">MA</option>
-              <option value="MI">MI</option>
-              <option value="MN">MN</option>
-              <option value="MS">MS</option>
-              <option value="MO">MO</option>
-              <option value="MT">MT</option>
-              <option value="NE">NE</option>
-              <option value="NV">NV</option>
-              <option value="NH">NH</option>
-              <option value="NJ">NJ</option>
-              <option value="NM">NM</option>
-              <option value="NY">NY</option>
-              <option value="NC">NC</option>
-              <option value="ND">ND</option>
-              <option value="OH">OH</option>
-              <option value="OK">OK</option>
-              <option value="OR">OR</option>
-              <option value="PA">PA</option>
-              <option value="RI">RI</option>
-              <option value="SC">SC</option>
-              <option value="SD">SD</option>
-              <option value="TN">TN</option>
-              <option value="TX">TX</option>
-              <option value="UT">UT</option>
-              <option value="VT">VT</option>
-              <option value="VA">VA</option>
-              <option value="WA">WA</option>
-              <option value="WV">WV</option>
-              <option value="WI">WI</option>
-              <option value="WY">WY</option>
-              <option value="DC">DC</option>
-            </select>
-          </div>
-        </div>
+              <div>
+                <label
+                  htmlFor="licensePlateState"
+                  className="block text-sm font-semibold text-gray-600 mb-2"
+                >
+                  License Plate State <span className="text-gray-400 font-normal">(optional)</span>
+                </label>
+                <select
+                  id="licensePlateState"
+                  name="licensePlateState"
+                  value={formData.licensePlateState}
+                  onChange={handleChange}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                >
+                  <option value="">Select State</option>
+                  <option value="AL">AL</option>
+                  <option value="AK">AK</option>
+                  <option value="AZ">AZ</option>
+                  <option value="AR">AR</option>
+                  <option value="CA">CA</option>
+                  <option value="CO">CO</option>
+                  <option value="CT">CT</option>
+                  <option value="DE">DE</option>
+                  <option value="FL">FL</option>
+                  <option value="GA">GA</option>
+                  <option value="HI">HI</option>
+                  <option value="ID">ID</option>
+                  <option value="IL">IL</option>
+                  <option value="IN">IN</option>
+                  <option value="IA">IA</option>
+                  <option value="KS">KS</option>
+                  <option value="KY">KY</option>
+                  <option value="LA">LA</option>
+                  <option value="ME">ME</option>
+                  <option value="MD">MD</option>
+                  <option value="MA">MA</option>
+                  <option value="MI">MI</option>
+                  <option value="MN">MN</option>
+                  <option value="MS">MS</option>
+                  <option value="MO">MO</option>
+                  <option value="MT">MT</option>
+                  <option value="NE">NE</option>
+                  <option value="NV">NV</option>
+                  <option value="NH">NH</option>
+                  <option value="NJ">NJ</option>
+                  <option value="NM">NM</option>
+                  <option value="NY">NY</option>
+                  <option value="NC">NC</option>
+                  <option value="ND">ND</option>
+                  <option value="OH">OH</option>
+                  <option value="OK">OK</option>
+                  <option value="OR">OR</option>
+                  <option value="PA">PA</option>
+                  <option value="RI">RI</option>
+                  <option value="SC">SC</option>
+                  <option value="SD">SD</option>
+                  <option value="TN">TN</option>
+                  <option value="TX">TX</option>
+                  <option value="UT">UT</option>
+                  <option value="VT">VT</option>
+                  <option value="VA">VA</option>
+                  <option value="WA">WA</option>
+                  <option value="WV">WV</option>
+                  <option value="WI">WI</option>
+                  <option value="WY">WY</option>
+                  <option value="DC">DC</option>
+                </select>
+              </div>
+            </div>
 
-        <div className="mt-8 flex gap-4">
-          <button
-            type="submit"
-            className="flex-1 bg-[#f04f23] text-white px-6 py-3 rounded-md hover:bg-[#d43e1a] transition-colors font-medium"
-          >
-            Add Vehicle
-          </button>
-          <button
-            type="button"
-            onClick={() => router.back()}
-            className="px-6 py-3 border border-gray-300 rounded-md hover:bg-gray-50 transition-colors font-medium"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
+            <div className="mt-8 flex flex-col sm:flex-row gap-4">
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={() => router.back()}
+                className="w-full sm:w-auto"
+              >
+                Cancel
+              </Button>
+              <Button type="submit" variant="primary" className="w-full sm:w-auto sm:ml-auto">
+                Add Vehicle
+              </Button>
+            </div>
+          </form>
+        </Card>
+      </div>
     </div>
   );
 }
-

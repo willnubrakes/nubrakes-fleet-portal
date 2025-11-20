@@ -1,12 +1,28 @@
 @import url("https://fonts.googleapis.com/css2?family=Source+Sans+Pro:wght@300;400;600;700&display=swap");
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Industry Inc";
+  src: url("/fonts/industryinc-base.woff2") format("woff2");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
-  --nubrakes-orange: #f04f23;
+  --nubrakes-orange: #F15A29;
   --nubrakes-black: #000000;
   --nubrakes-gray: #edf2f7;
   --nubrakes-navy: #03182a;
   --nubrakes-green: #34BB4B;
+  /* Spacing scale */
+  --spacing-16: 16px;
+  --spacing-24: 24px;
+  --spacing-32: 32px;
+  /* Gray scale for UI hierarchy */
+  --gray-50: #f9fafb;
+  --gray-200: #e5e7eb;
+  --gray-600: #4b5563;
 }
 
 @theme inline {
@@ -15,12 +31,20 @@
   --color-gray-50: var(--nubrakes-gray);
   --color-navy: var(--nubrakes-navy);
   --color-green: var(--nubrakes-green);
+  --color-gray-600: var(--gray-600);
+  --color-gray-200: var(--gray-200);
   --font-sans: "Source Sans Pro", sans-serif;
+  --font-heading: "Industry Inc", sans-serif;
 }
 
 body {
   font-family: "Source Sans Pro", sans-serif;
   color: var(--nubrakes-black);
+}
+
+/* Apply custom font to all headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Industry Inc", sans-serif;
 }
 
 /* React DatePicker styles */
@@ -50,4 +74,42 @@ body {
 
 .animate-slide-in {
   animation: slide-in 0.3s ease-out;
+}
+
+/* Table enhancements */
+.table-container {
+  overflow-x: auto;
+  max-height: 600px;
+  position: relative;
+}
+
+.table-fixed-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f9fafb;
+}
+
+.table-row-hover:hover {
+  background-color: var(--gray-50);
+}
+
+.table-row-alternate:nth-child(even) {
+  background-color: var(--gray-50);
+}
+
+/* Consistent spacing utilities */
+.spacing-vertical-16 {
+  margin-top: var(--spacing-16);
+  margin-bottom: var(--spacing-16);
+}
+
+.spacing-vertical-24 {
+  margin-top: var(--spacing-24);
+  margin-bottom: var(--spacing-24);
+}
+
+.spacing-vertical-32 {
+  margin-top: var(--spacing-32);
+  margin-bottom: var(--spacing-32);
 }

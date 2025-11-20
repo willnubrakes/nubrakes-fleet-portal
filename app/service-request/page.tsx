@@ -2,12 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { useVehicles } from "@/context/VehicleContext";
 import { useToast } from "@/components/ToastProvider";
 import { SubmitSuccessDialog } from "@/components/SubmitSuccessDialog";
 import { ProgressIndicator } from "@/components/ProgressIndicator";
+import { TimeWindowChips } from "@/components/ui/TimeWindowChips";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 const AVAILABLE_SERVICES = [
   "Brake Pad Replacement",
@@ -18,6 +22,13 @@ const AVAILABLE_SERVICES = [
   "Other",
 ];
 
+const SERVICE_CATEGORIES = {
+  Brakes: ["Brake Pad Replacement", "Brake Rotor Replacement", "Brake Caliper Replacement"],
+  "Oil Change": ["Oil Change"],
+  Battery: ["Battery Replacement"],
+  Other: ["Other"],
+};
+
 const TIME_WINDOWS = ["Morning", "Afternoon", "Anytime"];
 
 const STEPS = [
@@ -25,6 +36,38 @@ const STEPS = [
   "Select Services",
   "Preferred Schedule",
 ];
+
+const getServiceIcon = (service: string) => {
+  if (service.includes("Brake")) {
+    return (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+  }
+  if (service.includes("Battery")) {
+    return (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+    );
+  }
+  if (service.includes("Oil")) {
+    return (
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    );
+  }
+  return (
+    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+    </svg>
+  );
+};
 
 export default function ServiceRequestPage() {
   const { vehicles } = useVehicles();
@@ -41,6 +84,8 @@ export default function ServiceRequestPage() {
   const [notes, setNotes] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [notesExpanded, setNotesExpanded] = useState(false);
   const [submittedData, setSubmittedData] = useState<{
     vehicles: Array<{
       name: string;
@@ -73,14 +118,36 @@ export default function ServiceRequestPage() {
     });
   };
 
-  const handleSelectAllVehicles = () => {
-    if (selectedVehicles.length === vehicles.length) {
-      // Deselecting all: clear all services
-      setSelectedVehicles([]);
-      setVehicleServices({});
-      setVehicleOtherServices({});
+  const handleSelectAllVehicles = (filteredVehiclesList?: typeof vehicles) => {
+    const vehiclesToUse = filteredVehiclesList || vehicles;
+    const filteredIds = vehiclesToUse.map((v) => v.id);
+    const allFilteredSelected = filteredIds.every((id) => selectedVehicles.includes(id));
+    
+    if (allFilteredSelected) {
+      // Deselecting filtered vehicles: remove them from selection
+      setSelectedVehicles((prev) => prev.filter((id) => !filteredIds.includes(id)));
+      // Clear services for deselected vehicles
+      setVehicleServices((services) => {
+        const updated = { ...services };
+        filteredIds.forEach((id) => delete updated[id]);
+        return updated;
+      });
+      setVehicleOtherServices((others) => {
+        const updated = { ...others };
+        filteredIds.forEach((id) => delete updated[id]);
+        return updated;
+      });
     } else {
-      setSelectedVehicles(vehicles.map((v) => v.id));
+      // Select all filtered vehicles
+      setSelectedVehicles((prev) => {
+        const newSelection = [...prev];
+        filteredIds.forEach((id) => {
+          if (!newSelection.includes(id)) {
+            newSelection.push(id);
+          }
+        });
+        return newSelection;
+      });
     }
   };
 
@@ -298,7 +365,7 @@ export default function ServiceRequestPage() {
           </p>
           <a
             href="/vehicles/new"
-            className="text-[#f04f23] font-medium hover:underline"
+            className="text-[#F15A29] font-medium hover:underline"
           >
             Add vehicles →
           </a>
@@ -308,7 +375,7 @@ export default function ServiceRequestPage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <h1 className="text-3xl font-bold text-navy mb-8">Request Service</h1>
 
       <ProgressIndicator
@@ -317,250 +384,393 @@ export default function ServiceRequestPage() {
         stepLabels={STEPS}
       />
 
-      <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-8">
-        {/* Step 1: Vehicle Selection */}
-        {currentStep === 1 && (
-          <section className="mb-8">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold text-navy">
-                Select Vehicles <span className="text-red-500">*</span>
+      <Card className="relative">
+        <form onSubmit={handleSubmit}>
+          {/* Step 1: Vehicle Selection */}
+          {currentStep === 1 && (() => {
+            const filteredVehicles = vehicles.filter((vehicle) => {
+              if (!searchQuery.trim()) return true;
+              const query = searchQuery.toLowerCase().trim();
+              return vehicle.licensePlate?.toLowerCase().includes(query);
+            });
+            const filteredVehicleIds = filteredVehicles.map((v) => v.id);
+            const allFilteredSelected = filteredVehicleIds.length > 0 && filteredVehicleIds.every((id) => selectedVehicles.includes(id));
+            
+            return (
+              <section className="mb-8">
+                <h2 className="text-xl font-semibold text-navy mb-4">
+                  Select Vehicles <span className="text-red-500">*</span>
+                </h2>
+                <div className="flex gap-3 items-end mb-4">
+                  <div>
+                    <label
+                      htmlFor="license-plate-search"
+                      className="block text-sm font-semibold text-gray-600 mb-2"
+                    >
+                      Search by License Plate
+                    </label>
+                    <input
+                      type="text"
+                      id="license-plate-search"
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      placeholder="Enter license plate to search..."
+                      className="w-48 px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <Link
+                      href="/vehicles/new"
+                      className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors h-11"
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                      </svg>
+                      Vehicle missing?
+                    </Link>
+                  </div>
+                </div>
+                <div className="bg-white rounded-lg shadow-md overflow-hidden mb-4">
+                  {/* Desktop Table */}
+                  <div className="hidden md:block table-container" style={{ maxHeight: "500px" }}>
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50 table-fixed-header">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              <div className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={allFilteredSelected}
+                                  onChange={() => handleSelectAllVehicles(filteredVehicles)}
+                                  className="h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
+                                />
+                                <span>Select All</span>
+                              </div>
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Name
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Year
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Make
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              Model
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              VIN
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              License Plate
+                            </th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                              State
+                            </th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {filteredVehicles.map((vehicle, index) => (
+                            <tr
+                              key={vehicle.id}
+                              className={`table-row-hover cursor-pointer ${
+                                index % 2 === 1 ? "table-row-alternate" : ""
+                              }`}
+                              onClick={() => handleVehicleToggle(vehicle.id)}
+                            >
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedVehicles.includes(vehicle.id)}
+                                  onChange={() => handleVehicleToggle(vehicle.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
+                                />
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {vehicle.name || "—"}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {vehicle.year}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {vehicle.make}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {vehicle.model}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-mono">
+                                {vehicle.vin}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {vehicle.licensePlate}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {vehicle.licensePlateState || "—"}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  {/* Mobile Card View */}
+                  <div className="md:hidden space-y-3 p-4">
+                    <div className="flex items-center gap-2 mb-4 pb-3 border-b border-gray-200">
+                      <input
+                        type="checkbox"
+                        checked={allFilteredSelected}
+                        onChange={() => handleSelectAllVehicles(filteredVehicles)}
+                        className="h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
+                      />
+                      <span className="text-sm font-semibold text-gray-700">Select All</span>
+                    </div>
+                    {filteredVehicles.map((vehicle) => (
+                      <div
+                        key={vehicle.id}
+                        className={`border rounded-lg p-4 cursor-pointer transition-shadow ${
+                          selectedVehicles.includes(vehicle.id)
+                            ? "border-[#F15A29] bg-orange-50"
+                            : "border-gray-200 bg-white hover:shadow-md"
+                        }`}
+                        onClick={() => handleVehicleToggle(vehicle.id)}
+                      >
+                        <div className="flex items-start gap-3">
+                          <input
+                            type="checkbox"
+                            checked={selectedVehicles.includes(vehicle.id)}
+                            onChange={() => handleVehicleToggle(vehicle.id)}
+                            onClick={(e) => e.stopPropagation()}
+                            className="h-4 w-4 mt-1 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
+                          />
+                          <div className="flex-1">
+                            <div className="font-semibold text-gray-900 mb-1">
+                              {vehicle.name || vehicle.vin}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {vehicle.year} {vehicle.make} {vehicle.model}
+                            </div>
+                            <div className="text-xs text-gray-500 mt-2 font-mono">
+                              VIN: {vehicle.vin}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {vehicle.licensePlate} {vehicle.licensePlateState && `(${vehicle.licensePlateState})`}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </section>
+            );
+          })()}
+
+          {/* Step 2: Service Selection */}
+          {currentStep === 2 && (
+            <section className="mb-8">
+              <h2 className="text-xl font-semibold text-navy mb-4">
+                Select Services <span className="text-red-500">*</span>
               </h2>
-              <button
-                type="button"
-                onClick={handleSelectAllVehicles}
-                className="text-sm text-[#f04f23] hover:underline"
-              >
-                {selectedVehicles.length === vehicles.length
-                  ? "Deselect All"
-                  : "Select All"}
-              </button>
-            </div>
-            <div className="border border-gray-200 rounded-lg p-4 max-h-64 overflow-y-auto">
-              {vehicles.map((vehicle) => (
-                <label
-                  key={vehicle.id}
-                  className="flex items-center p-2 hover:bg-gray-50 rounded cursor-pointer"
-                >
+              {selectedVehicles.length === 0 ? (
+                <div className="text-center py-8 text-gray-500">
+                  No vehicles selected. Please go back to select vehicles.
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {selectedVehicles.map((vehicleId) => {
+                    const vehicle = vehicles.find((v) => v.id === vehicleId);
+                    if (!vehicle) return null;
+
+                    const vehicleServiceList = vehicleServices[vehicleId] || [];
+                    const otherServiceText = vehicleOtherServices[vehicleId] || "";
+
+                    return (
+                      <div
+                        key={vehicleId}
+                        className="border border-gray-200 rounded-lg p-6 bg-gray-50"
+                      >
+                        <div className="flex justify-between items-center mb-4">
+                          <h3 className="font-semibold text-navy text-lg">
+                            {vehicle.name || vehicle.vin} — {vehicle.year} {vehicle.make} {vehicle.model}
+                          </h3>
+                          <button
+                            type="button"
+                            onClick={() => handleSelectAllServicesForVehicle(vehicleId)}
+                            className="text-sm text-[#F15A29] hover:underline"
+                          >
+                            {vehicleServiceList.length === AVAILABLE_SERVICES.length
+                              ? "Deselect All"
+                              : "Select All"}
+                          </button>
+                        </div>
+                        <div className="space-y-4">
+                          {Object.entries(SERVICE_CATEGORIES).map(([category, services]) => (
+                            <div key={category}>
+                              <h4 className="text-sm font-semibold text-gray-700 mb-2">{category}</h4>
+                              <div className="space-y-2">
+                                {services.map((service) => (
+                                  <label
+                                    key={service}
+                                    className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-white cursor-pointer bg-white"
+                                  >
+                                    <input
+                                      type="checkbox"
+                                      checked={vehicleServiceList.includes(service)}
+                                      onChange={() => handleServiceToggle(vehicleId, service)}
+                                      className="mr-3 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
+                                    />
+                                    <span className="mr-2 text-gray-600">
+                                      {getServiceIcon(service)}
+                                    </span>
+                                    <span className="font-medium">{service}</span>
+                                  </label>
+                                ))}
+                              </div>
+                              {category !== Object.keys(SERVICE_CATEGORIES)[Object.keys(SERVICE_CATEGORIES).length - 1] && (
+                                <div className="border-t border-gray-200 my-4"></div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                        {vehicleServiceList.includes("Other") && (
+                          <div className="mt-4">
+                            <label
+                              htmlFor={`other-service-${vehicleId}`}
+                              className="block text-sm font-semibold text-gray-600 mb-2"
+                            >
+                              Please specify:
+                            </label>
+                            <input
+                              type="text"
+                              id={`other-service-${vehicleId}`}
+                              value={otherServiceText}
+                              onChange={(e) =>
+                                setVehicleOtherServices((prev) => ({
+                                  ...prev,
+                                  [vehicleId]: e.target.value,
+                                }))
+                              }
+                              placeholder="Enter service description"
+                              className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Step 3: Preferred Schedule */}
+          {currentStep === 3 && (
+            <section className="mb-8 pb-20">
+              <h2 className="text-xl font-semibold text-navy mb-4">
+                Preferred Schedule <span className="text-red-500">*</span>
+              </h2>
+
+              <div className="mb-6">
+                <label className="flex items-center">
                   <input
                     type="checkbox"
-                    checked={selectedVehicles.includes(vehicle.id)}
-                    onChange={() => handleVehicleToggle(vehicle.id)}
-                    className="mr-3 h-4 w-4 text-[#f04f23] focus:ring-[#f04f23] border-gray-300 rounded"
+                    checked={isFlexible}
+                    onChange={(e) => setIsFlexible(e.target.checked)}
+                    className="mr-2 h-4 w-4 text-[#F15A29] focus:ring-[#F15A29] border-gray-300 rounded"
                   />
-                  <div>
-                    <span className="font-medium">
-                      {vehicle.name || vehicle.vin}
-                    </span>
-                    <span className="text-gray-500 ml-2">
-                      {vehicle.year} {vehicle.make} {vehicle.model}
-                    </span>
-                  </div>
+                  <span className="font-semibold text-gray-600">Flexible on date</span>
                 </label>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* Step 2: Service Selection */}
-        {currentStep === 2 && (
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-navy mb-4">
-              Select Services <span className="text-red-500">*</span>
-            </h2>
-            {selectedVehicles.length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                No vehicles selected. Please go back to select vehicles.
               </div>
-            ) : (
-              <div className="space-y-4">
-                {selectedVehicles.map((vehicleId) => {
-                  const vehicle = vehicles.find((v) => v.id === vehicleId);
-                  if (!vehicle) return null;
 
-                  const vehicleServiceList = vehicleServices[vehicleId] || [];
-                  const otherServiceText = vehicleOtherServices[vehicleId] || "";
+              {!isFlexible && (
+                <div className="mb-6">
+                  <label
+                    htmlFor="preferred-date"
+                    className="block text-sm font-semibold text-gray-600 mb-2"
+                  >
+                    Preferred Date
+                  </label>
+                  <DatePicker
+                    id="preferred-date"
+                    selected={preferredDate}
+                    onChange={(date: Date | null) => setPreferredDate(date)}
+                    minDate={new Date()}
+                    dateFormat="MMMM d, yyyy"
+                    className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent"
+                    placeholderText="Select a date"
+                    showPopperArrow={false}
+                  />
+                </div>
+              )}
 
-                  return (
-                    <div
-                      key={vehicleId}
-                      className="border border-gray-200 rounded-lg p-4 bg-gray-50"
-                    >
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className="font-semibold text-navy">
-                          {vehicle.name || vehicle.vin}
-                          <span className="text-gray-500 text-sm font-normal ml-2">
-                            {vehicle.year} {vehicle.make} {vehicle.model}
-                          </span>
-                        </h3>
-                        <button
-                          type="button"
-                          onClick={() => handleSelectAllServicesForVehicle(vehicleId)}
-                          className="text-sm text-[#f04f23] hover:underline"
-                        >
-                          {vehicleServiceList.length === AVAILABLE_SERVICES.length
-                            ? "Deselect All"
-                            : "Select All"}
-                        </button>
-                      </div>
-                      <div className="space-y-2">
-                        {AVAILABLE_SERVICES.map((service) => (
-                          <label
-                            key={service}
-                            className="flex items-center p-2 border border-gray-200 rounded-lg hover:bg-white cursor-pointer bg-white"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={vehicleServiceList.includes(service)}
-                              onChange={() => handleServiceToggle(vehicleId, service)}
-                              className="mr-3 h-4 w-4 text-[#f04f23] focus:ring-[#f04f23] border-gray-300 rounded"
-                            />
-                            <span className="font-medium">{service}</span>
-                          </label>
-                        ))}
-                      </div>
-                      {vehicleServiceList.includes("Other") && (
-                        <div className="mt-4">
-                          <label
-                            htmlFor={`other-service-${vehicleId}`}
-                            className="block text-sm font-medium text-gray-700 mb-2"
-                          >
-                            Please specify:
-                          </label>
-                          <input
-                            type="text"
-                            id={`other-service-${vehicleId}`}
-                            value={otherServiceText}
-                            onChange={(e) =>
-                              setVehicleOtherServices((prev) => ({
-                                ...prev,
-                                [vehicleId]: e.target.value,
-                              }))
-                            }
-                            placeholder="Enter service description"
-                            className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
-                          />
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </section>
-        )}
-
-        {/* Step 3: Preferred Schedule */}
-        {currentStep === 3 && (
-          <section className="mb-8">
-            <h2 className="text-xl font-semibold text-navy mb-4">
-              Preferred Schedule <span className="text-red-500">*</span>
-            </h2>
-
-            <div className="mb-4">
-              <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  checked={isFlexible}
-                  onChange={(e) => setIsFlexible(e.target.checked)}
-                  className="mr-2 h-4 w-4 text-[#f04f23] focus:ring-[#f04f23] border-gray-300 rounded"
+              <div className="mb-6">
+                <label className="block text-sm font-semibold text-gray-600 mb-2">
+                  Preferred Time Window <span className="text-red-500">*</span>
+                </label>
+                <TimeWindowChips
+                  value={preferredTime}
+                  onChange={setPreferredTime}
                 />
-                <span className="font-medium">Flexible on date</span>
-              </label>
-            </div>
+              </div>
 
-            {!isFlexible && (
-              <div className="mb-4">
+              <div>
                 <label
-                  htmlFor="preferred-date"
-                  className="block text-sm font-medium text-gray-700 mb-2"
+                  htmlFor="notes"
+                  className="block text-sm font-semibold text-gray-600 mb-2"
                 >
-                  Preferred Date
+                  Notes (Optional)
                 </label>
-                <DatePicker
-                  id="preferred-date"
-                  selected={preferredDate}
-                  onChange={(date: Date | null) => setPreferredDate(date)}
-                  minDate={new Date()}
-                  dateFormat="MMMM d, yyyy"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
-                  placeholderText="Select a date"
+                <textarea
+                  id="notes"
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  onFocus={() => setNotesExpanded(true)}
+                  placeholder="Add any additional notes or special instructions..."
+                  rows={notesExpanded || notes ? 6 : 3}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-md focus:ring-2 focus:ring-[#F15A29] focus:border-transparent resize-y transition-all"
                 />
               </div>
+            </section>
+          )}
+
+          {/* Navigation Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-between pt-4 border-t border-gray-200">
+            {currentStep > 1 && (
+              <Button
+                type="button"
+                variant="secondary"
+                onClick={handleBack}
+                className="w-full sm:w-auto"
+              >
+                Back
+              </Button>
             )}
-
-            <div className="mb-4">
-              <label
-                htmlFor="preferred-time"
-                className="block text-sm font-medium text-gray-700 mb-2"
+            <div className="flex-1 hidden sm:block" />
+            {currentStep < 3 ? (
+              <Button
+                type="button"
+                variant="primary"
+                onClick={handleNext}
+                className="w-full sm:w-auto"
               >
-                Preferred Time Window <span className="text-red-500">*</span>
-              </label>
-              <select
-                id="preferred-time"
-                value={preferredTime}
-                onChange={(e) => setPreferredTime(e.target.value)}
-                required
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent"
+                Next
+              </Button>
+            ) : (
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={isSubmitting}
+                className="w-full sm:w-auto sticky bottom-4 sm:static"
               >
-                <option value="">Select time window</option>
-                {TIME_WINDOWS.map((time) => (
-                  <option key={time} value={time}>
-                    {time}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label
-                htmlFor="notes"
-                className="block text-sm font-medium text-gray-700 mb-2"
-              >
-                Notes (Optional)
-              </label>
-              <textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Add any additional notes or special instructions..."
-                rows={4}
-                className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#f04f23] focus:border-transparent resize-y"
-              />
-            </div>
-          </section>
-        )}
-
-        {/* Navigation Buttons */}
-        <div className="flex gap-4 justify-between">
-          {currentStep > 1 && (
-            <button
-              type="button"
-              onClick={handleBack}
-              className="px-6 py-3 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors font-medium"
-            >
-              Back
-            </button>
-          )}
-          <div className="flex-1" />
-          {currentStep < 3 ? (
-            <button
-              type="button"
-              onClick={handleNext}
-              className="px-6 py-3 bg-[#f04f23] text-white rounded-md hover:bg-[#d43e1a] transition-colors font-medium"
-            >
-              Next
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-6 py-3 bg-[#f04f23] text-white rounded-md hover:bg-[#d43e1a] transition-colors font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Submitting..." : "Submit Request"}
-            </button>
-          )}
-        </div>
-      </form>
+                {isSubmitting ? "Submitting..." : "Submit Request"}
+              </Button>
+            )}
+          </div>
+        </form>
+      </Card>
 
       <SubmitSuccessDialog
         isOpen={showSuccessDialog}
@@ -573,4 +783,3 @@ export default function ServiceRequestPage() {
     </div>
   );
 }
-

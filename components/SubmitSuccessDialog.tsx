@@ -100,7 +100,7 @@ export function SubmitSuccessDialog({
         <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="bg-[#f04f23] text-white px-6 py-2 rounded-md hover:bg-[#d43e1a] transition-colors font-medium"
+            className="bg-[#F15A29] text-white px-6 py-2 rounded-md hover:bg-[#d43e1a] transition-colors font-medium"
           >
             Close
           </button>
