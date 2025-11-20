@@ -1,36 +1,104 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# NuBrakes Fleet Portal
+
+A Next.js application for managing fleet vehicles and requesting services.
+
+## Features
+
+### Vehicle Roster Management
+- **View Vehicles** (`/vehicles`): Display all vehicles in a table format
+- **Add Vehicle** (`/vehicles/new`): Add individual vehicles with form validation
+- **Upload CSV** (`/vehicles/upload`): Bulk import vehicles from CSV files
+
+### Service Requests
+- **Request Service** (`/service-request`): Multi-step form to:
+  - Select multiple vehicles
+  - Choose services (with "Other" write-in option)
+  - Set preferred date/time window
+  - Submit requests to webhook endpoint
+
+## Tech Stack
+
+- **Next.js 16** (App Router)
+- **React 19**
+- **TypeScript**
+- **Tailwind CSS v4**
+- **Papa Parse** (CSV parsing)
+- **React DatePicker** (date selection)
 
 ## Getting Started
 
-First, run the development server:
+### Prerequisites
+
+- Node.js 22 or higher
+- npm
+
+### Installation
+
+```bash
+npm install
+```
+
+### Development
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### Build
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run build
+npm start
+```
 
-## Learn More
+## Project Structure
 
-To learn more about Next.js, take a look at the following resources:
+```
+nubrakes-fleet-portal/
+├── app/
+│   ├── api/
+│   │   └── webhook/          # Placeholder webhook endpoint
+│   ├── vehicles/
+│   │   ├── page.tsx          # Vehicle roster table
+│   │   ├── new/
+│   │   │   └── page.tsx      # Add vehicle form
+│   │   └── upload/
+│   │       └── page.tsx      # CSV upload
+│   ├── service-request/
+│   │   └── page.tsx          # Service request form
+│   ├── layout.tsx            # Root layout with providers
+│   ├── page.tsx              # Home page
+│   └── globals.css           # Global styles & branding
+├── components/
+│   ├── Navigation.tsx        # Header navigation
+│   ├── Toast.tsx             # Toast notification component
+│   ├── ToastProvider.tsx     # Toast context provider
+│   └── SubmitSuccessDialog.tsx # Success modal
+└── context/
+    └── VehicleContext.tsx    # Vehicle state management
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Branding
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Colors
+- **Primary Orange**: `#f04f23`
+- **Black**: `#000000`
+- **Gray**: `#edf2f7`
+- **Navy Blue**: `#03182a`
+- **Green**: `#34BB4B`
 
-## Deploy on Vercel
+### Fonts
+- **Source Sans Pro** (from Google Fonts)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Future Integrations
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Auth0**: Authentication will be added later
+- **Zapier**: Webhook endpoint (`/api/webhook`) is ready for Zapier integration
+
+## Notes
+
+- Vehicle data is stored in React Context (in-memory, not persisted)
+- CSV upload expects columns: `year`, `make`, `model`, `vin`, `license_plate`
+- Service request payload is logged to console (ready for Zapier webhook)
