@@ -291,7 +291,7 @@ export default function UploadVehiclesPage() {
             <Table
               columns={columns}
               data={previewData}
-              keyExtractor={(row, index) => String(row._rowIndex || index)}
+              keyExtractor={(row) => String(row._rowIndex ?? `${row.vin}-${row.licensePlate}`)}
               maxHeight="400px"
             />
           </div>

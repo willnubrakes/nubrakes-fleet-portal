@@ -887,9 +887,11 @@ export default function ServiceRequestPage() {
                         </label>
                         <div
                           onClick={() => {
-                            const input = document.getElementById("start-time");
+                            const input = document.getElementById("start-time") as HTMLInputElement | null;
                             input?.focus();
-                            input?.showPicker?.();
+                            if (input && "showPicker" in input) {
+                              input.showPicker();
+                            }
                           }}
                           className="cursor-pointer"
                         >
@@ -911,9 +913,11 @@ export default function ServiceRequestPage() {
                         </label>
                         <div
                           onClick={() => {
-                            const input = document.getElementById("end-time");
+                            const input = document.getElementById("end-time") as HTMLInputElement | null;
                             input?.focus();
-                            input?.showPicker?.();
+                            if (input && "showPicker" in input) {
+                              input.showPicker();
+                            }
                           }}
                           className="cursor-pointer"
                         >
