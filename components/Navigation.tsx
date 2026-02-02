@@ -9,11 +9,6 @@ const BASE_PATH = process.env.NODE_ENV === "production" ? "/nubrakes-fleet-porta
 export function Navigation() {
   const pathname = usePathname();
 
-  // Hide navigation on home page
-  if (pathname === "/") {
-    return null;
-  }
-
   const navLinks = [
     { href: "/service-request", label: "Request Service", isPrimary: true },
     { href: "/vehicles", label: "Vehicle Roster", isPrimary: false },

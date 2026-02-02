@@ -45,7 +45,7 @@ export default function Home() {
           </p>
         </div>
 
-        {/* Four CTA Buttons */}
+        {/* CTA Buttons */}
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           {/* Request Service */}
           <Link
