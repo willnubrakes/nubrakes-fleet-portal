@@ -102,6 +102,32 @@ export default function Home() {
             </div>
           </Link>
 
+          {/* Approvals */}
+          <Link
+            href="/approvals"
+            className="group relative bg-gradient-to-br from-gray-50 to-white p-8 rounded-xl shadow-md hover:shadow-xl transition-all duration-300 border-2 border-transparent hover:border-[#03182a] hover:scale-[1.02] transform"
+          >
+            <div className="flex items-start gap-4 mb-4">
+              <div className="flex-shrink-0 w-12 h-12 rounded-lg bg-[#03182a] flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-semibold text-navy group-hover:text-[#03182a] transition-colors duration-300">
+                Approvals
+              </h2>
+            </div>
+            <p className="text-gray-600 mb-6">
+              Review and approve recommended services for repair jobs on a job-by-job basis.
+            </p>
+            <div className="w-full bg-[#03182a] text-white px-6 py-3 rounded-lg font-semibold hover:bg-[#03182a]/90 transition-colors duration-300 flex items-center justify-center gap-2 group-hover:shadow-lg cursor-pointer">
+              Review Approvals
+              <svg className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+              </svg>
+            </div>
+          </Link>
+
           {/* Suggest Improvement */}
           <a
             href="https://docs.google.com/forms/d/e/1FAIpQLSd5dHn9ikstknvV5Gb14DIZgzL8qoC5hlGDH-ttTiIO9QF47w/viewform?usp=publish-editor"

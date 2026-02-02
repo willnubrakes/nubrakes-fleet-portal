@@ -3,6 +3,7 @@ import "./globals.css";
 import { Navigation } from "@/components/Navigation";
 import { ToastProvider } from "@/components/ToastProvider";
 import { VehicleProvider } from "@/context/VehicleContext";
+import { ApprovalProvider } from "@/context/ApprovalContext";
 
 export const metadata: Metadata = {
   title: "NuBrakes Fleet Portal",
@@ -19,10 +20,12 @@ export default function RootLayout({
       <body className="antialiased">
         <ToastProvider>
           <VehicleProvider>
-            <Navigation />
-            <main className="min-h-screen bg-gray-50">
-              {children}
-            </main>
+            <ApprovalProvider>
+              <Navigation />
+              <main className="min-h-screen bg-gray-50">
+                {children}
+              </main>
+            </ApprovalProvider>
           </VehicleProvider>
         </ToastProvider>
       </body>

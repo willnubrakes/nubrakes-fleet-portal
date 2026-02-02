@@ -17,6 +17,7 @@ export function Navigation() {
   const navLinks = [
     { href: "/service-request", label: "Request Service", isPrimary: true },
     { href: "/vehicles", label: "Vehicle Roster", isPrimary: false },
+    { href: "/approvals", label: "Approvals", isPrimary: false },
   ];
 
   return (
