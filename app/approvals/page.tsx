@@ -20,7 +20,7 @@ export default function ApprovalsPage() {
   const router = useRouter();
   const { jobs } = useApprovals();
   const { vehicles } = useVehicles();
-  const [filter, setFilter] = useState<Filter>("all");
+  const [filter, setFilter] = useState<Filter>("needs_review");
 
   const filteredJobs =
     filter === "needs_review"
@@ -34,18 +34,35 @@ export default function ApprovalsPage() {
     return v ? v.name || v.vin : vehicleId;
   };
 
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString();
+    } catch {
+      return dateStr;
+    }
+  };
+
   const columns = [
     {
       key: "id",
-      label: "Job",
+      label: "Job Number",
       sortable: true,
       render: (value: string) => (
         <span className="text-sm font-medium text-gray-900">{value}</span>
       ),
     },
     {
+      key: "date",
+      label: "Date",
+      sortable: true,
+      render: (value: string) => (
+        <span className="text-sm text-gray-700">{formatDate(value)}</span>
+      ),
+    },
+    {
       key: "vehicleId",
-      label: "Vehicle",
+      label: "Vehicle Name",
       sortable: true,
       render: (value: string) => (
         <span className="text-sm text-gray-700">{getVehicleDisplay(value)}</span>
@@ -53,7 +70,7 @@ export default function ApprovalsPage() {
     },
     {
       key: "reviewState",
-      label: "Review state",
+      label: "Status (review state)",
       sortable: true,
       render: (value: string) => (
         <span className="text-sm text-gray-700">
@@ -62,12 +79,21 @@ export default function ApprovalsPage() {
       ),
     },
     {
-      key: "pendingCount",
-      label: "Pending",
-      sortable: true,
-      width: "80px",
-      render: (value: number) => (
-        <span className="text-sm text-gray-600">{value}</span>
+      key: "reviewApprovals",
+      label: "",
+      sortable: false,
+      width: "140px",
+      render: (_: unknown, row: JobWithReviewState) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            router.push(`/approvals/${row.id}`);
+          }}
+          className="inline-flex items-center px-3 py-1.5 rounded-md text-sm font-medium bg-[#03182a] text-white hover:bg-[#052a42] transition-colors"
+        >
+          Review Approvals
+        </button>
       ),
     },
   ];

@@ -11,6 +11,20 @@ export type ApprovalStatus = "pending" | "approved" | "not_approved";
 
 export type ReviewState = "not_reviewed" | "partially_reviewed" | "reviewed";
 
+// Inspection details for brake-related recommendations
+export interface BrakePadsDetails {
+  thicknessDriverMm?: number;
+  thicknessPassengerMm?: number;
+  condition?: string;
+}
+export interface RotorsDetails {
+  condition?: string;
+}
+export interface FluidDetails {
+  ppm?: number;
+  level?: "full" | "not_full";
+}
+
 export interface Recommendation {
   id: string;
   jobId: string;
@@ -19,11 +33,18 @@ export interface Recommendation {
   approvalStatus: ApprovalStatus;
   description?: string;
   conditionTags?: string[];
+  brakePads?: BrakePadsDetails;
+  rotors?: RotorsDetails;
+  fluid?: FluidDetails;
+  /** Optional URL to view inspection/service photo */
+  photoUrl?: string;
 }
 
 export interface Job {
   id: string;
   vehicleId: string;
+  /** ISO date string for display (e.g. "2025-01-15") */
+  date: string;
   recommendations: Recommendation[];
 }
 
@@ -49,7 +70,13 @@ const initialRecommendations: Recommendation[] = [
     category: "recommended_immediately",
     approvalStatus: "pending",
     description: "Recommend replacement due to condition + thickness",
-    conditionTags: ["UNEVEN WEAR", "17% Thickness"],
+    conditionTags: ["UNEVEN WEAR"],
+    brakePads: {
+      thicknessDriverMm: 4.2,
+      thicknessPassengerMm: 3.8,
+      condition: "Uneven wear",
+    },
+    photoUrl: "/api/inspection-photos/rec-1",
   },
   {
     id: "rec-2",
@@ -58,15 +85,23 @@ const initialRecommendations: Recommendation[] = [
     category: "service_soon",
     approvalStatus: "pending",
     description: "Flush recommended based on age and moisture content",
-    conditionTags: ["MOISTURE DETECTED", "3% CONTENT"],
+    conditionTags: ["MOISTURE DETECTED"],
+    fluid: {
+      ppm: 850,
+      level: "not_full",
+    },
   },
   {
     id: "rec-3",
     jobId: "job-1",
-    serviceName: "Battery",
+    serviceName: "Front Brake Rotors",
     category: "all_systems_go",
     approvalStatus: "pending",
-    description: "Within spec",
+    description: "Good Condition",
+    rotors: {
+      condition: "Good Condition",
+    },
+    photoUrl: "/api/inspection-photos/rec-3",
   },
   {
     id: "rec-4",
@@ -76,6 +111,9 @@ const initialRecommendations: Recommendation[] = [
     approvalStatus: "approved",
     description: "Rear rotors at minimum thickness",
     conditionTags: ["MIN THICKNESS", "CRITICAL"],
+    rotors: {
+      condition: "At minimum thickness",
+    },
   },
   {
     id: "rec-5",
@@ -94,6 +132,11 @@ const initialRecommendations: Recommendation[] = [
     approvalStatus: "not_approved",
     description: "Customer deferred",
     conditionTags: ["DEFERRED"],
+    brakePads: {
+      thicknessDriverMm: 5.1,
+      thicknessPassengerMm: 5.0,
+      condition: "Customer deferred",
+    },
   },
   {
     id: "rec-7",
@@ -106,9 +149,9 @@ const initialRecommendations: Recommendation[] = [
 ];
 
 const initialJobs: Job[] = [
-  { id: "job-1", vehicleId: "1", recommendations: initialRecommendations.filter((r) => r.jobId === "job-1") },
-  { id: "job-2", vehicleId: "2", recommendations: initialRecommendations.filter((r) => r.jobId === "job-2") },
-  { id: "job-3", vehicleId: "3", recommendations: initialRecommendations.filter((r) => r.jobId === "job-3") },
+  { id: "job-1", vehicleId: "1", date: "2025-01-15", recommendations: initialRecommendations.filter((r) => r.jobId === "job-1") },
+  { id: "job-2", vehicleId: "2", date: "2025-01-14", recommendations: initialRecommendations.filter((r) => r.jobId === "job-2") },
+  { id: "job-3", vehicleId: "3", date: "2025-01-13", recommendations: initialRecommendations.filter((r) => r.jobId === "job-3") },
 ];
 
 export interface JobWithReviewState extends Job {

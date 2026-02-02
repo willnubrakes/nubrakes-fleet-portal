@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApprovals } from "@/context/ApprovalContext";
@@ -49,8 +50,8 @@ function SeverityIcon({ category }: { category: RecommendationCategory }) {
     );
   }
   return (
-    <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-      <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div className="w-6 h-6 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+      <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
     </div>
@@ -65,6 +66,7 @@ export function ApprovalJobDetailClient({ jobId }: ApprovalJobDetailClientProps)
   const router = useRouter();
   const { getJob, setServiceApproval } = useApprovals();
   const { vehicles } = useVehicles();
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const job = getJob(jobId);
   const vehicle = job ? vehicles.find((v) => v.id === job.vehicleId) : undefined;
@@ -89,11 +91,56 @@ export function ApprovalJobDetailClient({ jobId }: ApprovalJobDetailClientProps)
   };
 
   const handleSubmitApprovals = () => {
+    setShowSuccessModal(true);
+  };
+
+  const handleCloseSuccessModal = () => {
+    setShowSuccessModal(false);
     router.push("/approvals");
   };
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex flex-col min-h-[calc(100vh-8rem)]">
+      {/* Success modal */}
+      {showSuccessModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-8">
+            <div className="text-center mb-6">
+              <div className="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-500 mb-4">
+                <svg
+                  className="h-8 w-8 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h2 className="text-2xl font-bold text-navy mb-2">
+                Approvals submitted
+              </h2>
+              <p className="text-gray-600">
+                Your approvals have been saved successfully.
+              </p>
+            </div>
+            <div className="flex justify-end">
+              <Button
+                variant="primary"
+                onClick={handleCloseSuccessModal}
+                className="w-full"
+              >
+                Back to Approvals
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header: Service Approval + Cancel */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold text-navy">Service Approval</h1>
@@ -137,16 +184,36 @@ export function ApprovalJobDetailClient({ jobId }: ApprovalJobDetailClientProps)
             rec.fluid ||
             rec.photoUrl ||
             (!(rec.brakePads || rec.rotors || rec.fluid) && rec.conditionTags && rec.conditionTags.length > 0);
+          const showFindings = hasWhy || rec.category === "all_systems_go";
+
+          const isApproved = showActions && rec.approvalStatus === "approved";
+          const isDeclined = showActions && rec.approvalStatus === "not_approved";
+          const cardBg =
+            isApproved ? "bg-green-50 border-green-300" : isDeclined ? "bg-red-50 border-red-300" : "bg-white border-gray-200";
 
           return (
-            <Card key={rec.id} className="border border-gray-200 overflow-hidden">
+            <Card key={rec.id} className={`border overflow-hidden ${cardBg}`}>
               <div className="p-4">
-                {/* Level 1: Heading + recommendation (same size) */}
+                {/* Level 1: Heading + recommendation + approval status icon */}
                 <div className="flex items-center gap-2 mb-1.5">
                   <SeverityIcon category={rec.category} />
-                  <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
+                  <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide flex-1">
                     {rec.serviceName}
                   </h3>
+                  {isApproved && (
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-green-500 flex items-center justify-center" title="Approved">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </div>
+                  )}
+                  {isDeclined && (
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-red-500 flex items-center justify-center" title="Declined">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </div>
+                  )}
                 </div>
                 <span
                   className={`inline-block text-sm font-semibold uppercase tracking-wider px-2 py-0.5 rounded ${
@@ -154,15 +221,23 @@ export function ApprovalJobDetailClient({ jobId }: ApprovalJobDetailClientProps)
                       ? "bg-red-50 text-red-700"
                       : rec.category === "service_soon"
                         ? "bg-amber-50 text-amber-800"
-                        : "bg-gray-100 text-gray-600"
+                        : "bg-green-50 text-green-800"
                   }`}
                 >
                   {CATEGORY_LABELS[rec.category]}
                 </span>
 
-                {/* Level 2: Why section (one size for all content) */}
-                {hasWhy && (
-                  <div className="mt-3 rounded-lg bg-gray-50/80 border border-gray-100 px-3.5 py-2.5 space-y-2 text-sm text-gray-700">
+                {/* Level 2: Why section — always show for All Systems Go so all findings are visible */}
+                {showFindings && (
+                  <div
+                    className={`mt-3 rounded-lg border px-3.5 py-2.5 space-y-2 text-sm ${
+                      isApproved
+                        ? "bg-green-100/60 border-green-200 text-gray-700"
+                        : isDeclined
+                          ? "bg-red-100/40 border-red-200 text-gray-700"
+                          : "bg-gray-50/80 border-gray-100 text-gray-700"
+                    }`}
+                  >
                     <p className="font-bold text-gray-500 uppercase tracking-wider">
                       Our Findings
                     </p>
@@ -231,16 +306,40 @@ export function ApprovalJobDetailClient({ jobId }: ApprovalJobDetailClientProps)
                     <Button
                       variant="secondary"
                       onClick={() => handleApprove(rec.id, "not_approved")}
-                      className={`w-full min-w-0 ${rec.approvalStatus === "not_approved" ? "bg-red-100 text-red-800 border-red-200" : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"}`}
+                      className={`w-full min-w-0 inline-flex items-center justify-center gap-2 ${
+                        rec.approvalStatus === "not_approved"
+                          ? "bg-red-200 text-red-900 border-red-300"
+                          : "bg-white text-red-700 border-red-200 hover:bg-red-50"
+                      }`}
                     >
-                      {rec.approvalStatus === "not_approved" ? "Declined" : "Decline"}
+                      {rec.approvalStatus === "not_approved" ? (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                          Declined
+                        </>
+                      ) : (
+                        "Decline"
+                      )}
                     </Button>
                     <Button
                       variant="primary"
                       onClick={() => handleApprove(rec.id, "approved")}
-                      className="w-full min-w-0"
+                      className={`w-full min-w-0 inline-flex items-center justify-center gap-2 ${
+                        rec.approvalStatus === "approved" ? "bg-green-600 hover:bg-green-700 border-green-700 text-white" : ""
+                      }`}
                     >
-                      {rec.approvalStatus === "approved" ? "Approved" : "Approve"}
+                      {rec.approvalStatus === "approved" ? (
+                        <>
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                          Approved
+                        </>
+                      ) : (
+                        "Approve"
+                      )}
                     </Button>
                   </div>
                 )}
