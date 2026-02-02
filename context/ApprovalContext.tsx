@@ -18,6 +18,7 @@ export interface Recommendation {
   category: RecommendationCategory;
   approvalStatus: ApprovalStatus;
   description?: string;
+  conditionTags?: string[];
 }
 
 export interface Job {
@@ -47,7 +48,8 @@ const initialRecommendations: Recommendation[] = [
     serviceName: "Front brake pads",
     category: "recommended_immediately",
     approvalStatus: "pending",
-    description: "Front brake pad at 3mm — below minimum",
+    description: "Recommend replacement due to condition + thickness",
+    conditionTags: ["UNEVEN WEAR", "17% Thickness"],
   },
   {
     id: "rec-2",
@@ -55,7 +57,8 @@ const initialRecommendations: Recommendation[] = [
     serviceName: "Brake fluid exchange",
     category: "service_soon",
     approvalStatus: "pending",
-    description: "Fluid moisture level elevated",
+    description: "Flush recommended based on age and moisture content",
+    conditionTags: ["MOISTURE DETECTED", "3% CONTENT"],
   },
   {
     id: "rec-3",
@@ -72,6 +75,7 @@ const initialRecommendations: Recommendation[] = [
     category: "recommended_immediately",
     approvalStatus: "approved",
     description: "Rear rotors at minimum thickness",
+    conditionTags: ["MIN THICKNESS", "CRITICAL"],
   },
   {
     id: "rec-5",
@@ -80,6 +84,7 @@ const initialRecommendations: Recommendation[] = [
     category: "service_soon",
     approvalStatus: "pending",
     description: "Minor wear observed",
+    conditionTags: ["WEAR OBSERVED"],
   },
   {
     id: "rec-6",
@@ -88,6 +93,7 @@ const initialRecommendations: Recommendation[] = [
     category: "recommended_immediately",
     approvalStatus: "not_approved",
     description: "Customer deferred",
+    conditionTags: ["DEFERRED"],
   },
   {
     id: "rec-7",
