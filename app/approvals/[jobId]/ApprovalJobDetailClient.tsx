@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useApprovals } from "@/context/ApprovalContext";
@@ -18,6 +17,12 @@ const CATEGORY_ORDER: RecommendationCategory[] = [
   "service_soon",
   "all_systems_go",
 ];
+
+const CATEGORY_LABELS: Record<RecommendationCategory, string> = {
+  recommended_immediately: "Service Recommended Immediately",
+  service_soon: "Service Soon",
+  all_systems_go: "All Systems Go",
+};
 
 function requiresApproval(category: RecommendationCategory): boolean {
   return category !== "all_systems_go";
@@ -60,7 +65,6 @@ export function ApprovalJobDetailClient({ jobId }: ApprovalJobDetailClientProps)
   const router = useRouter();
   const { getJob, setServiceApproval } = useApprovals();
   const { vehicles } = useVehicles();
-  const [customerContacted, setCustomerContacted] = useState("");
 
   const job = getJob(jobId);
   const vehicle = job ? vehicles.find((v) => v.id === job.vehicleId) : undefined;
@@ -111,21 +115,6 @@ export function ApprovalJobDetailClient({ jobId }: ApprovalJobDetailClientProps)
         </p>
       </div>
 
-      {/* Customer Contacted */}
-      <div className="mb-6">
-        <label htmlFor="customer-contacted" className="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">
-          Customer Contacted
-        </label>
-        <input
-          id="customer-contacted"
-          type="text"
-          value={customerContacted}
-          onChange={(e) => setCustomerContacted(e.target.value)}
-          placeholder="e.g. John Smith"
-          className="w-full max-w-md rounded-lg border border-gray-300 px-4 py-3 text-gray-900 placeholder-gray-500 focus:border-[#03182a] focus:ring-1 focus:ring-[#03182a] focus:outline-none"
-        />
-      </div>
-
       {/* Recommended Services: single section with count badge */}
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xs font-bold text-gray-500 uppercase tracking-wider">
@@ -141,38 +130,115 @@ export function ApprovalJobDetailClient({ jobId }: ApprovalJobDetailClientProps)
           const isInformational = rec.category === "all_systems_go";
           const showActions = !isInformational;
 
+          const hasWhy =
+            rec.description ||
+            rec.brakePads ||
+            rec.rotors ||
+            rec.fluid ||
+            rec.photoUrl ||
+            (!(rec.brakePads || rec.rotors || rec.fluid) && rec.conditionTags && rec.conditionTags.length > 0);
+
           return (
-            <Card key={rec.id} className="border border-gray-200">
-              <div className="p-5">
-                <div className="flex flex-col gap-1 mb-4">
-                  <div className="flex items-center gap-2">
-                    <SeverityIcon category={rec.category} />
-                    <h3 className="font-bold text-gray-900 text-lg">{rec.serviceName}</h3>
-                  </div>
-                  {rec.conditionTags && rec.conditionTags.length > 0 && (
-                    <div className="flex items-center gap-1.5 mt-0.5 flex-wrap">
-                      <span className="text-red-600 font-bold text-[13px] tracking-wide uppercase">
-                        {rec.conditionTags.join(" | ")}
-                      </span>
-                    </div>
-                  )}
-                  {rec.description && (
-                    <p className="text-sm text-gray-600 mt-1.5">{rec.description}</p>
-                  )}
+            <Card key={rec.id} className="border border-gray-200 overflow-hidden">
+              <div className="p-4">
+                {/* Level 1: Heading + recommendation (same size) */}
+                <div className="flex items-center gap-2 mb-1.5">
+                  <SeverityIcon category={rec.category} />
+                  <h3 className="font-bold text-gray-900 text-sm uppercase tracking-wide">
+                    {rec.serviceName}
+                  </h3>
                 </div>
+                <span
+                  className={`inline-block text-sm font-semibold uppercase tracking-wider px-2 py-0.5 rounded ${
+                    rec.category === "recommended_immediately"
+                      ? "bg-red-50 text-red-700"
+                      : rec.category === "service_soon"
+                        ? "bg-amber-50 text-amber-800"
+                        : "bg-gray-100 text-gray-600"
+                  }`}
+                >
+                  {CATEGORY_LABELS[rec.category]}
+                </span>
+
+                {/* Level 2: Why section (one size for all content) */}
+                {hasWhy && (
+                  <div className="mt-3 rounded-lg bg-gray-50/80 border border-gray-100 px-3.5 py-2.5 space-y-2 text-sm text-gray-700">
+                    <p className="font-bold text-gray-500 uppercase tracking-wider">
+                      Our Findings
+                    </p>
+                    {rec.description && (
+                      <p className="font-medium text-gray-900">
+                        {rec.description}
+                      </p>
+                    )}
+                    {!(rec.brakePads || rec.rotors || rec.fluid) &&
+                      rec.conditionTags &&
+                      rec.conditionTags.length > 0 && (
+                        <p className="font-semibold text-red-600 uppercase tracking-wide">
+                          {rec.conditionTags.join(" · ")}
+                        </p>
+                      )}
+                    {(rec.brakePads || rec.rotors || rec.fluid) && (
+                      <dl className="space-y-1">
+                        {rec.brakePads && (
+                          <div className="flex flex-wrap gap-x-1.5">
+                            <dt className="font-medium text-gray-500 after:content-[':']">Brake pads</dt>
+                            <dd className="font-medium">
+                              Driver {rec.brakePads.thicknessDriverMm != null ? `${rec.brakePads.thicknessDriverMm} mm` : "—"}
+                              {" · "}
+                              Passenger {rec.brakePads.thicknessPassengerMm != null ? `${rec.brakePads.thicknessPassengerMm} mm` : "—"}
+                              {rec.brakePads.condition && ` · ${rec.brakePads.condition}`}
+                            </dd>
+                          </div>
+                        )}
+                        {rec.rotors && (
+                          <div className="flex flex-wrap gap-x-1.5">
+                            <dt className="font-medium text-gray-500 after:content-[':']">Rotors</dt>
+                            <dd className="font-medium">{rec.rotors.condition ?? "—"}</dd>
+                          </div>
+                        )}
+                        {rec.fluid && (
+                          <div className="flex flex-wrap gap-x-1.5">
+                            <dt className="font-medium text-gray-500 after:content-[':']">Fluid</dt>
+                            <dd className="font-medium">
+                              {rec.fluid.ppm != null ? `${rec.fluid.ppm} ppm` : "—"}
+                              {" · "}
+                              {rec.fluid.level === "full" ? "Full" : rec.fluid.level === "not_full" ? "Not full" : "—"}
+                            </dd>
+                          </div>
+                        )}
+                      </dl>
+                    )}
+                    {rec.photoUrl && (
+                      <a
+                        href={rec.photoUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 font-medium text-[#03182a] hover:underline"
+                      >
+                        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                        </svg>
+                        View photo
+                      </a>
+                    )}
+                  </div>
+                )}
+
+                {/* Actions: equal-width buttons */}
                 {showActions && (
-                  <div className="flex gap-3 pt-2">
+                  <div className="mt-4 grid grid-cols-2 gap-3">
                     <Button
-                      variant={rec.approvalStatus === "not_approved" ? "destructive" : "secondary"}
+                      variant="secondary"
                       onClick={() => handleApprove(rec.id, "not_approved")}
-                      className="flex-1"
+                      className={`w-full min-w-0 ${rec.approvalStatus === "not_approved" ? "bg-red-100 text-red-800 border-red-200" : "bg-red-50 text-red-700 border-red-200 hover:bg-red-100"}`}
                     >
                       {rec.approvalStatus === "not_approved" ? "Declined" : "Decline"}
                     </Button>
                     <Button
-                      variant={rec.approvalStatus === "approved" ? "primary" : "secondary"}
+                      variant="primary"
                       onClick={() => handleApprove(rec.id, "approved")}
-                      className="flex-1"
+                      className="w-full min-w-0"
                     >
                       {rec.approvalStatus === "approved" ? "Approved" : "Approve"}
                     </Button>
